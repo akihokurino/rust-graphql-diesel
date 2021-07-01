@@ -1,0 +1,14 @@
+[package]
+name = "photos-server"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+actix-cors = "0.5.4"
+actix-web = "3.3.2"
+juniper_actix = "0.2.3"
+juniper = "0.15.3"
+juniper-from-schema = { git = "https://github.com/davidpdrsn/juniper-from-schema.git" }
+async-trait = "0.1.48"

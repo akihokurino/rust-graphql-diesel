@@ -1,0 +1,21 @@
+directive @juniper(
+    ownership: String = "borrowed",
+    infallible: Boolean = false,
+    with_time_zone: Boolean = true,
+    async: Boolean = false,
+    stream_item_infallible: Boolean = true,
+    stream_type: String = null
+) on FIELD_DEFINITION | SCALAR
+
+schema {
+    query: Query
+}
+
+type Query {
+    me: Me! @juniper(ownership: "owned", async: true)
+}
+
+type Me {
+    id: String! @juniper(ownership: "owned")
+    name: String! @juniper(ownership: "owned")
+}

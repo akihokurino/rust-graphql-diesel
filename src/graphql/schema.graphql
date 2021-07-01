@@ -9,13 +9,23 @@ directive @juniper(
 
 schema {
     query: Query
+    mutation: Mutation
 }
 
 type Query {
     me: Me! @juniper(ownership: "owned", async: true)
 }
 
+type Mutation {
+    signUp(input: SignUpInput!): Me! @juniper(ownership: "owned", async: true)
+}
+
+
 type Me {
     id: String! @juniper(ownership: "owned")
     name: String! @juniper(ownership: "owned")
+}
+
+input SignUpInput {
+    name: String!
 }

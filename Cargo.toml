@@ -12,3 +12,9 @@ juniper_actix = "0.2.3"
 juniper = "0.15.3"
 juniper-from-schema = { git = "https://github.com/davidpdrsn/juniper-from-schema.git" }
 async-trait = "0.1.48"
+uuid = { version = "0.8", features = ["serde", "v4"] }
+diesel = { version = "1.4.5", features = ["mysql", "chrono"] }
+diesel_migrations = "1.4.0"
+serde = "1.0.125"
+chrono = { version = "0.4", features = ["serde"]}
+dotenv = "0.15.0"

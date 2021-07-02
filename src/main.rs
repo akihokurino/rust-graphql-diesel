@@ -1,6 +1,12 @@
+#[macro_use]
+extern crate diesel;
+
+mod ddb;
 mod domain;
 mod graphql;
+mod schema;
 
+use dotenv::dotenv;
 use std::env;
 
 use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer};
@@ -21,7 +27,11 @@ async fn graphql_route(
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    dotenv().ok();
+
     let port = env::var("PORT").unwrap_or("8080".to_string());
+
+    println!("running server on port {}", port);
 
     HttpServer::new(move || {
         let schema = graphql::new_schema();

@@ -1,0 +1,31 @@
+version: '3.5'
+services:
+  db:
+    build: ./db
+    ports:
+      - '3306:3306'
+    volumes:
+      - ./db/initdb.d:/docker-entrypoint-initdb.d
+      - ./db/data:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: photos
+      MYSQL_USER: photos
+      MYSQL_PASSWORD: photos
+      MYSQL_ROOT_PASSWORD: password
+#  app:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#      target: local-dev
+#    image: photos-server-local:latest
+#    ports:
+#      - '3000:3000'
+#    volumes:
+#      - .:/app
+#    working_dir: /app
+#    command:
+#      - "sh"
+#      - "-c"
+#      - "cargo run"
+#    environment:
+#      - PORT=3000

@@ -1,0 +1,1 @@
+FROM rust:1.53.0 as local-dev

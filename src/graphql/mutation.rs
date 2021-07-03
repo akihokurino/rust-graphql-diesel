@@ -22,12 +22,56 @@ impl MutationFields for Mutation {
         let now: DateTime<Utc> = Utc::now();
         let name = input.name;
 
-        let new_user = user::User::new(name, now);
+        let user = user::User::new(name, now);
 
-        if let Err(e) = user_dao.insert(new_user.clone()) {
+        if let Err(e) = user_dao.insert(user.clone()) {
             return Err(FieldError::from(e));
         }
 
-        Ok(Me { user: new_user })
+        Ok(Me { user })
+    }
+
+    async fn field_update_user_info<'s, 'r, 'a>(
+        &'s self,
+        exec: &Executor<'r, 'a, Context>,
+        _: &QueryTrail<'r, Me, Walked>,
+        input: UpdateUserInfoInput,
+    ) -> FieldResult<Me> {
+        let ctx = exec.context();
+        let user_dao = ctx.ddb_dao::<user::User>();
+        let authorized_user_id = ctx
+            .authorized_user_id
+            .clone()
+            .ok_or(FieldError::from("unauthorized"))?;
+
+        let now: DateTime<Utc> = Utc::now();
+        let name = input.name;
+
+        let mut user = user_dao.get(authorized_user_id).map_err(FieldError::from)?;
+        user.update(name, now);
+
+        if let Err(e) = user_dao.update(user.clone()) {
+            return Err(FieldError::from(e));
+        }
+
+        Ok(Me { user })
+    }
+
+    async fn field_leave<'s, 'r, 'a>(
+        &'s self,
+        exec: &Executor<'r, 'a, Context>,
+    ) -> FieldResult<bool> {
+        let ctx = exec.context();
+        let user_dao = ctx.ddb_dao::<user::User>();
+        let authorized_user_id = ctx
+            .authorized_user_id
+            .clone()
+            .ok_or(FieldError::from("unauthorized"))?;
+
+        if let Err(e) = user_dao.delete(authorized_user_id) {
+            return Err(FieldError::from(e));
+        }
+
+        Ok(true)
     }
 }

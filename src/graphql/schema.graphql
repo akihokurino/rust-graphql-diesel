@@ -14,18 +14,41 @@ schema {
 
 type Query {
     me: Me! @juniper(ownership: "owned", async: true)
+    others: OtherConnection! @juniper(ownership: "owned", async: true)
 }
 
 type Mutation {
     signUp(input: SignUpInput!): Me! @juniper(ownership: "owned", async: true)
+    updateUserInfo(input: UpdateUserInfoInput!): Me! @juniper(ownership: "owned", async: true)
+    leave: Boolean! @juniper(ownership: "owned", async: true)
 }
 
+interface Node {
+    id: ID! @juniper(ownership: "owned")
+}
 
-type Me {
-    id: String! @juniper(ownership: "owned")
+type Me implements Node {
+    id: ID! @juniper(ownership: "owned")
     name: String! @juniper(ownership: "owned")
 }
 
+type Other implements Node {
+    id: ID! @juniper(ownership: "owned")
+    name: String! @juniper(ownership: "owned")
+}
+
+type OtherEdge {
+    node: Other! @juniper(ownership: "owned", async: true)
+}
+
+type OtherConnection {
+    edges: [OtherEdge!]! @juniper(ownership: "owned", async: true)
+}
+
 input SignUpInput {
+    name: String!
+}
+
+input UpdateUserInfoInput {
     name: String!
 }

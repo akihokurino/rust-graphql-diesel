@@ -38,6 +38,19 @@ impl From<domain::user::User> for Entity {
 }
 
 impl Dao<domain::user::User> {
+    pub fn get_all_with_exclude(&self, exclude_id: String) -> DaoResult<Vec<domain::user::User>> {
+        return users::table
+            .filter(users::id.ne(exclude_id))
+            .order(users::created_at.desc())
+            .load::<Entity>(&self.conn)
+            .map(|v: Vec<Entity>| {
+                v.into_iter()
+                    .map(|v| domain::user::User::try_from(v).unwrap())
+                    .collect::<Vec<_>>()
+            })
+            .map_err(DaoError::from);
+    }
+
     pub fn get(&self, id: String) -> DaoResult<domain::user::User> {
         users::table
             .find(id)
@@ -48,10 +61,35 @@ impl Dao<domain::user::User> {
 
     pub fn insert(&self, item: domain::user::User) -> DaoResult<domain::user::User> {
         let e: Entity = item.clone().into();
-        diesel::insert_into(users::table)
+        if let Err(e) = diesel::insert_into(users::table)
             .values(e)
             .execute(&self.conn)
-            .map(|_| item)
             .map_err(DaoError::from)
+        {
+            return Err(e);
+        }
+        Ok(item)
+    }
+
+    pub fn update(&self, item: domain::user::User) -> DaoResult<domain::user::User> {
+        let e: Entity = item.clone().into();
+        if let Err(e) = diesel::update(users::table.find(e.id))
+            .set((users::name.eq(e.name), users::updated_at.eq(e.updated_at)))
+            .execute(&self.conn)
+            .map_err(DaoError::from)
+        {
+            return Err(e);
+        }
+        Ok(item)
+    }
+
+    pub fn delete(&self, id: String) -> DaoResult<bool> {
+        if let Err(e) = diesel::delete(users::table.find(id))
+            .execute(&self.conn)
+            .map_err(DaoError::from)
+        {
+            return Err(e);
+        }
+        Ok(true)
     }
 }

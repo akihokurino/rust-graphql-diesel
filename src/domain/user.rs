@@ -18,4 +18,9 @@ impl User {
             updated_at: now.naive_utc(),
         }
     }
+
+    pub fn update(&mut self, name: String, now: DateTime<Utc>) {
+        self.name = name;
+        self.updated_at = now.naive_utc();
+    }
 }

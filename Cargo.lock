@@ -1443,6 +1443,7 @@ dependencies = [
  "juniper-from-schema",
  "juniper_actix",
  "serde",
+ "thiserror",
  "uuid",
 ]
 

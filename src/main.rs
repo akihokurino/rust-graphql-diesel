@@ -9,21 +9,8 @@ mod schema;
 use dotenv::dotenv;
 use std::env;
 
-use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer};
+use actix_web::{error, web, App, HttpRequest, HttpResponse, HttpServer};
 use juniper_actix::{graphql_handler, playground_handler};
-
-async fn playground_route() -> actix_web::Result<HttpResponse> {
-    playground_handler("/graphql", None).await
-}
-
-async fn graphql_route(
-    req: HttpRequest,
-    payload: web::Payload,
-    schema: web::Data<graphql::Schema>,
-) -> actix_web::Result<HttpResponse> {
-    let context = graphql::Context {};
-    graphql_handler(&schema, &context, req, payload).await
-}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -33,7 +20,7 @@ async fn main() -> std::io::Result<()> {
 
     println!("running server on port {}", port);
 
-    HttpServer::new(move || {
+    HttpServer::new(|| {
         let schema = graphql::new_schema();
 
         App::new()
@@ -49,4 +36,22 @@ async fn main() -> std::io::Result<()> {
     .unwrap()
     .run()
     .await
+}
+
+async fn playground_route() -> actix_web::Result<HttpResponse> {
+    playground_handler("/graphql", None).await
+}
+
+async fn graphql_route(
+    req: HttpRequest,
+    payload: web::Payload,
+    schema: web::Data<graphql::Schema>,
+) -> actix_web::Result<HttpResponse> {
+    let authorized_user_id = match req.headers().get("x-user-id") {
+        Some(v) => Some(v.to_str().map_err(|e| error::ErrorBadRequest(e))?.into()),
+        None => None,
+    };
+
+    let context = graphql::Context { authorized_user_id };
+    graphql_handler(&schema, &context, req, payload).await
 }

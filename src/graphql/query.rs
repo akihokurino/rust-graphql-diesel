@@ -3,7 +3,6 @@ use crate::graphql::me::Me;
 use crate::graphql::Context;
 use crate::graphql::*;
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
 use juniper::{Executor, FieldResult};
 use juniper_from_schema::{QueryTrail, Walked};
 
@@ -16,16 +15,23 @@ impl QueryFields for Query {
         exec: &Executor<'r, 'a, Context>,
         _: &QueryTrail<'r, Me, Walked>,
     ) -> FieldResult<Me> {
-        let _ = exec.context();
-        let now: DateTime<Utc> = Utc::now();
+        let ctx = exec.context();
+        let user_dao = ctx.ddb_dao::<user::User>();
+        let authorized_user_id: FieldResult<String> = ctx
+            .authorized_user_id
+            .clone()
+            .ok_or(FieldError::from("unauthorized"));
+        if let Err(e) = authorized_user_id {
+            return Err(e);
+        }
+
+        let user = user_dao.get(authorized_user_id.ok().unwrap());
+        if let Err(_e) = user {
+            return Err(FieldError::from("server error"));
+        }
 
         Ok(Me {
-            user: user::User {
-                id: "1".to_string(),
-                name: "akiho".to_string(),
-                created_at: now.naive_utc(),
-                updated_at: now.naive_utc(),
-            },
+            user: user.unwrap(),
         })
     }
 }

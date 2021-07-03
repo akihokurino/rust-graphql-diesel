@@ -1,5 +1,7 @@
+use crate::ddb::{Dao, DaoError, DaoResult};
 use crate::domain;
-use crate::schema::*;
+use crate::schema::users;
+use diesel::prelude::*;
 use std::convert::TryFrom;
 
 #[derive(Queryable, Insertable, Debug, Clone, Eq, PartialEq)]
@@ -32,5 +34,24 @@ impl From<domain::user::User> for Entity {
             created_at: d.created_at,
             updated_at: d.updated_at,
         }
+    }
+}
+
+impl Dao<domain::user::User> {
+    pub fn get(&self, id: String) -> DaoResult<domain::user::User> {
+        users::table
+            .find(id)
+            .first(&self.conn)
+            .map(|v: Entity| domain::user::User::try_from(v).unwrap())
+            .map_err(DaoError::from)
+    }
+
+    pub fn insert(&self, item: domain::user::User) -> DaoResult<domain::user::User> {
+        let e: Entity = item.clone().into();
+        diesel::insert_into(users::table)
+            .values(e)
+            .execute(&self.conn)
+            .map(|_| item)
+            .map_err(DaoError::from)
     }
 }

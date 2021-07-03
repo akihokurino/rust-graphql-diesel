@@ -36,7 +36,10 @@ pub enum DaoError {
 
 impl From<diesel::result::Error> for DaoError {
     fn from(e: diesel::result::Error) -> Self {
-        Self::InternalError(e.to_string())
+        match e {
+            diesel::result::Error::NotFound => Self::NotFound,
+            _ => Self::InternalError(e.to_string()),
+        }
     }
 }
 

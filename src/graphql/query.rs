@@ -26,8 +26,8 @@ impl QueryFields for Query {
         }
 
         let user = user_dao.get(authorized_user_id.ok().unwrap());
-        if let Err(_e) = user {
-            return Err(FieldError::from("server error"));
+        if let Err(e) = user {
+            return Err(FieldError::from(e));
         }
 
         Ok(Me {

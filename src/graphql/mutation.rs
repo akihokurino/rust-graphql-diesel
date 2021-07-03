@@ -24,8 +24,8 @@ impl MutationFields for Mutation {
 
         let new_user = user::User::new(name, now);
 
-        if let Err(_e) = user_dao.insert(new_user.clone()) {
-            return Err(FieldError::from("server error"));
+        if let Err(e) = user_dao.insert(new_user.clone()) {
+            return Err(FieldError::from(e));
         }
 
         Ok(Me { user: new_user })

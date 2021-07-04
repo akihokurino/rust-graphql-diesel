@@ -1,3 +1,4 @@
+pub mod photo;
 pub mod user;
 
 use diesel::mysql::MysqlConnection;

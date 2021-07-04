@@ -50,6 +50,7 @@ impl MutationFields for Mutation {
         let name = input.name;
 
         let mut user = user_dao.get(authorized_user_id).map_err(FieldError::from)?;
+
         user.update(name, now);
 
         if let Err(e) = user_dao.update(user.clone()) {
@@ -101,5 +102,62 @@ impl MutationFields for Mutation {
         }
 
         Ok(Photo { photo })
+    }
+
+    async fn field_update_photo<'s, 'r, 'a>(
+        &'s self,
+        exec: &Executor<'r, 'a, Context>,
+        _: &QueryTrail<'r, Photo, Walked>,
+        input: UpdatePhotoInput,
+    ) -> FieldResult<Photo> {
+        let ctx = exec.context();
+        let photo_dao = ctx.ddb_dao::<domain::photo::Photo>();
+        let authorized_user_id = ctx
+            .authorized_user_id
+            .clone()
+            .ok_or(FieldError::from("unauthorized"))?;
+
+        let now: DateTime<Utc> = Utc::now();
+        let id = input.id;
+        let is_public = input.is_public;
+
+        let mut photo = photo_dao.get(id.clone()).map_err(FieldError::from)?;
+        if photo.user_id != authorized_user_id {
+            return Err(FieldError::from("forbidden"));
+        }
+
+        photo.update_visibility(is_public, now);
+
+        if let Err(e) = photo_dao.update(photo.clone()) {
+            return Err(FieldError::from(e));
+        }
+
+        Ok(Photo { photo })
+    }
+
+    async fn field_delete_photo<'s, 'r, 'a>(
+        &'s self,
+        exec: &Executor<'r, 'a, Context>,
+        input: DeletePhotoInput,
+    ) -> FieldResult<bool> {
+        let ctx = exec.context();
+        let photo_dao = ctx.ddb_dao::<domain::photo::Photo>();
+        let authorized_user_id = ctx
+            .authorized_user_id
+            .clone()
+            .ok_or(FieldError::from("unauthorized"))?;
+
+        let id = input.id;
+
+        let photo = photo_dao.get(id.clone()).map_err(FieldError::from)?;
+        if photo.user_id != authorized_user_id {
+            return Err(FieldError::from("forbidden"));
+        }
+
+        if let Err(e) = photo_dao.delete(id.clone()) {
+            return Err(FieldError::from(e));
+        }
+
+        Ok(true)
     }
 }

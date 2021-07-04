@@ -22,6 +22,8 @@ type Mutation {
     updateUserInfo(input: UpdateUserInfoInput!): Me! @juniper(ownership: "owned", async: true)
     leave: Boolean! @juniper(ownership: "owned", async: true)
     createPhoto(input: CreatePhotoInput!): Photo! @juniper(ownership: "owned", async: true)
+    updatePhoto(input: UpdatePhotoInput!): Photo! @juniper(ownership: "owned", async: true)
+    deletePhoto(input: DeletePhotoInput!): Boolean! @juniper(ownership: "owned", async: true)
 }
 
 interface Node {
@@ -64,4 +66,13 @@ input UpdateUserInfoInput {
 input CreatePhotoInput {
     url: String!
     isPublic: Boolean!
+}
+
+input UpdatePhotoInput {
+    id: String!
+    isPublic: Boolean!
+}
+
+input DeletePhotoInput {
+    id: String!
 }

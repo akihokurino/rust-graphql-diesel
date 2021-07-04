@@ -1,6 +1,5 @@
 use crate::domain;
 use crate::graphql::*;
-use diesel::types::Bool;
 
 #[derive(Debug, Clone)]
 pub struct Photo {

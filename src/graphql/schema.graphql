@@ -21,6 +21,7 @@ type Mutation {
     signUp(input: SignUpInput!): Me! @juniper(ownership: "owned", async: true)
     updateUserInfo(input: UpdateUserInfoInput!): Me! @juniper(ownership: "owned", async: true)
     leave: Boolean! @juniper(ownership: "owned", async: true)
+    createPhoto(input: CreatePhotoInput!): Photo! @juniper(ownership: "owned", async: true)
 }
 
 interface Node {
@@ -45,10 +46,22 @@ type OtherConnection {
     edges: [OtherEdge!]! @juniper(ownership: "owned", async: true)
 }
 
+type Photo implements Node {
+    id: ID! @juniper(ownership: "owned")
+    userId: ID! @juniper(ownership: "owned")
+    url: String! @juniper(ownership: "owned")
+    isPublic: Boolean! @juniper(ownership: "owned")
+}
+
 input SignUpInput {
     name: String!
 }
 
 input UpdateUserInfoInput {
     name: String!
+}
+
+input CreatePhotoInput {
+    url: String!
+    isPublic: Boolean!
 }

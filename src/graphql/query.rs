@@ -1,4 +1,4 @@
-use crate::domain::*;
+use crate::domain;
 use crate::graphql::me::*;
 use crate::graphql::other::*;
 use crate::graphql::Context;
@@ -17,7 +17,7 @@ impl QueryFields for Query {
         _: &QueryTrail<'r, Me, Walked>,
     ) -> FieldResult<Me> {
         let ctx = exec.context();
-        let user_dao = ctx.ddb_dao::<user::User>();
+        let user_dao = ctx.ddb_dao::<domain::user::User>();
         let authorized_user_id = ctx
             .authorized_user_id
             .clone()
@@ -34,7 +34,7 @@ impl QueryFields for Query {
         _: &QueryTrail<'r, OtherConnection, Walked>,
     ) -> FieldResult<OtherConnection> {
         let ctx = exec.context();
-        let user_dao = ctx.ddb_dao::<user::User>();
+        let user_dao = ctx.ddb_dao::<domain::user::User>();
         let authorized_user_id = ctx
             .authorized_user_id
             .clone()

@@ -1,5 +1,6 @@
-use crate::domain::*;
+use crate::domain;
 use crate::graphql::me::Me;
+use crate::graphql::photo::Photo;
 use crate::graphql::Context;
 use crate::graphql::*;
 use async_trait::async_trait;
@@ -18,11 +19,12 @@ impl MutationFields for Mutation {
         input: SignUpInput,
     ) -> FieldResult<Me> {
         let ctx = exec.context();
-        let user_dao = ctx.ddb_dao::<user::User>();
+        let user_dao = ctx.ddb_dao::<domain::user::User>();
+
         let now: DateTime<Utc> = Utc::now();
         let name = input.name;
 
-        let user = user::User::new(name, now);
+        let user = domain::user::User::new(name, now);
 
         if let Err(e) = user_dao.insert(user.clone()) {
             return Err(FieldError::from(e));
@@ -38,7 +40,7 @@ impl MutationFields for Mutation {
         input: UpdateUserInfoInput,
     ) -> FieldResult<Me> {
         let ctx = exec.context();
-        let user_dao = ctx.ddb_dao::<user::User>();
+        let user_dao = ctx.ddb_dao::<domain::user::User>();
         let authorized_user_id = ctx
             .authorized_user_id
             .clone()
@@ -62,7 +64,7 @@ impl MutationFields for Mutation {
         exec: &Executor<'r, 'a, Context>,
     ) -> FieldResult<bool> {
         let ctx = exec.context();
-        let user_dao = ctx.ddb_dao::<user::User>();
+        let user_dao = ctx.ddb_dao::<domain::user::User>();
         let authorized_user_id = ctx
             .authorized_user_id
             .clone()
@@ -73,5 +75,31 @@ impl MutationFields for Mutation {
         }
 
         Ok(true)
+    }
+
+    async fn field_create_photo<'s, 'r, 'a>(
+        &'s self,
+        exec: &Executor<'r, 'a, Context>,
+        _: &QueryTrail<'r, Photo, Walked>,
+        input: CreatePhotoInput,
+    ) -> FieldResult<Photo> {
+        let ctx = exec.context();
+        let photo_dao = ctx.ddb_dao::<domain::photo::Photo>();
+        let authorized_user_id = ctx
+            .authorized_user_id
+            .clone()
+            .ok_or(FieldError::from("unauthorized"))?;
+
+        let now: DateTime<Utc> = Utc::now();
+        let url = input.url;
+        let is_public = input.is_public;
+
+        let photo = domain::photo::Photo::new(authorized_user_id, url, is_public, now);
+
+        if let Err(e) = photo_dao.insert(photo.clone()) {
+            return Err(FieldError::from(e));
+        }
+
+        Ok(Photo { photo })
     }
 }

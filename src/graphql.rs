@@ -1,12 +1,14 @@
 mod me;
 mod mutation;
 mod other;
+mod photo;
 mod query;
 
 use self::mutation::*;
 use self::query::*;
 use crate::graphql::me::*;
 use crate::graphql::other::*;
+use crate::graphql::photo::*;
 use juniper::*;
 use juniper_from_schema::graphql_schema_from_file;
 

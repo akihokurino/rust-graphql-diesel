@@ -80,4 +80,27 @@ impl QueryFields for Query {
 
         Ok(PhotoConnection(edges))
     }
+
+    async fn field_my_photo<'s, 'r, 'a>(
+        &'s self,
+        exec: &Executor<'r, 'a, Context>,
+        _: &QueryTrail<'r, Photo, Walked>,
+        input: MyPhotoInput,
+    ) -> FieldResult<Photo> {
+        let ctx = exec.context();
+        let photo_dao = ctx.ddb_dao::<domain::photo::Photo>();
+        let authorized_user_id = ctx
+            .authorized_user_id
+            .clone()
+            .ok_or(FieldError::from("unauthorized"))?;
+
+        let id = input.id;
+
+        let photo = photo_dao.get(id.clone()).map_err(FieldError::from)?;
+        if photo.user_id != authorized_user_id {
+            return Err(FieldError::from("forbidden"));
+        }
+
+        Ok(Photo { photo })
+    }
 }

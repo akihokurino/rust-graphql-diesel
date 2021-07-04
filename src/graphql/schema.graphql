@@ -16,6 +16,7 @@ type Query {
     me: Me! @juniper(ownership: "owned", async: true)
     others: OtherConnection! @juniper(ownership: "owned", async: true)
     myPhotos: PhotoConnection! @juniper(ownership: "owned", async: true)
+    myPhoto(input: MyPhotoInput!): Photo! @juniper(ownership: "owned", async: true)
 }
 
 type Mutation {
@@ -84,5 +85,9 @@ input UpdatePhotoInput {
 }
 
 input DeletePhotoInput {
+    id: String!
+}
+
+input MyPhotoInput {
     id: String!
 }

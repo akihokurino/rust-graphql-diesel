@@ -1,6 +1,7 @@
 use crate::domain;
 use crate::graphql::me::*;
 use crate::graphql::other::*;
+use crate::graphql::photo::*;
 use crate::graphql::Context;
 use crate::graphql::*;
 use async_trait::async_trait;
@@ -52,5 +53,31 @@ impl QueryFields for Query {
             .collect::<Vec<_>>();
 
         Ok(OtherConnection(edges))
+    }
+
+    async fn field_my_photos<'s, 'r, 'a>(
+        &'s self,
+        exec: &Executor<'r, 'a, Context>,
+        _: &QueryTrail<'r, PhotoConnection, Walked>,
+    ) -> FieldResult<PhotoConnection> {
+        let ctx = exec.context();
+        let photo_dao = ctx.ddb_dao::<domain::photo::Photo>();
+        let authorized_user_id = ctx
+            .authorized_user_id
+            .clone()
+            .ok_or(FieldError::from("unauthorized"))?;
+
+        let photos = photo_dao
+            .get_all_by_user(authorized_user_id)
+            .map_err(FieldError::from)?;
+
+        let edges = photos
+            .into_iter()
+            .map(|v| PhotoEdge {
+                photo_id: v.id.clone(),
+            })
+            .collect::<Vec<_>>();
+
+        Ok(PhotoConnection(edges))
     }
 }

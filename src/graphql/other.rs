@@ -49,11 +49,10 @@ pub async fn resolve_other<'r, 'a>(
     _: &QueryTrail<'r, Other, Walked>,
     user_id: String,
 ) -> FieldResult<Other> {
-    let user = exec.context().ddb_dao::<domain::user::User>().get(user_id);
-    if let Err(e) = user {
-        return Err(FieldError::from(e));
-    }
-    Ok(Other {
-        user: user.unwrap(),
-    })
+    let user = exec
+        .context()
+        .ddb_dao::<domain::user::User>()
+        .get(user_id)
+        .map_err(FieldError::from)?;
+    Ok(Other { user })
 }

@@ -15,6 +15,7 @@ schema {
 type Query {
     me: Me! @juniper(ownership: "owned", async: true)
     others: OtherConnection! @juniper(ownership: "owned", async: true)
+    myPhotos: PhotoConnection! @juniper(ownership: "owned", async: true)
 }
 
 type Mutation {
@@ -54,6 +55,15 @@ type Photo implements Node {
     url: String! @juniper(ownership: "owned")
     isPublic: Boolean! @juniper(ownership: "owned")
 }
+
+type PhotoEdge {
+    node: Photo! @juniper(ownership: "owned", async: true)
+}
+
+type PhotoConnection {
+    edges: [PhotoEdge!]! @juniper(ownership: "owned", async: true)
+}
+
 
 input SignUpInput {
     name: String!

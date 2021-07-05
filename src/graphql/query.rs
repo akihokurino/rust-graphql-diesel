@@ -47,9 +47,7 @@ impl QueryFields for Query {
 
         let edges = others
             .into_iter()
-            .map(|v| OtherEdge {
-                user_id: v.id.clone(),
-            })
+            .map(|v| OtherEdge { user: v.clone() })
             .collect::<Vec<_>>();
 
         Ok(OtherConnection(edges))
@@ -73,9 +71,7 @@ impl QueryFields for Query {
 
         let edges = photos
             .into_iter()
-            .map(|v| PhotoEdge {
-                photo_id: v.id.clone(),
-            })
+            .map(|v| PhotoEdge { photo: v.clone() })
             .collect::<Vec<_>>();
 
         Ok(PhotoConnection(edges))

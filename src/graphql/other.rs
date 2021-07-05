@@ -18,16 +18,18 @@ impl OtherFields for Other {
 
 #[derive(Debug, Clone)]
 pub struct OtherEdge {
-    pub user_id: String,
+    pub user: domain::user::User,
 }
 #[async_trait]
 impl OtherEdgeFields for OtherEdge {
     async fn field_node<'s, 'r, 'a>(
         &'s self,
-        exec: &Executor<'r, 'a, Context>,
-        trail: &QueryTrail<'r, Other, Walked>,
+        _exec: &Executor<'r, 'a, Context>,
+        _: &QueryTrail<'r, Other, Walked>,
     ) -> FieldResult<Other> {
-        resolve_other(exec, trail, self.user_id.clone()).await
+        Ok(Other {
+            user: self.user.clone(),
+        })
     }
 }
 
@@ -42,17 +44,4 @@ impl OtherConnectionFields for OtherConnection {
     ) -> FieldResult<Vec<OtherEdge>> {
         Ok(self.0.clone())
     }
-}
-
-pub async fn resolve_other<'r, 'a>(
-    exec: &Executor<'r, 'a, Context>,
-    _: &QueryTrail<'r, Other, Walked>,
-    user_id: String,
-) -> FieldResult<Other> {
-    let user = exec
-        .context()
-        .ddb_dao::<domain::user::User>()
-        .get(user_id)
-        .map_err(FieldError::from)?;
-    Ok(Other { user })
 }

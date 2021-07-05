@@ -26,16 +26,18 @@ impl PhotoFields for Photo {
 
 #[derive(Debug, Clone)]
 pub struct PhotoEdge {
-    pub photo_id: String,
+    pub photo: domain::photo::Photo,
 }
 #[async_trait]
 impl PhotoEdgeFields for PhotoEdge {
     async fn field_node<'s, 'r, 'a>(
         &'s self,
-        exec: &Executor<'r, 'a, Context>,
-        trail: &QueryTrail<'r, Photo, Walked>,
+        _exec: &Executor<'r, 'a, Context>,
+        _: &QueryTrail<'r, Photo, Walked>,
     ) -> FieldResult<Photo> {
-        resolve_photo(exec, trail, self.photo_id.clone()).await
+        Ok(Photo {
+            photo: self.photo.clone(),
+        })
     }
 }
 
@@ -50,17 +52,4 @@ impl PhotoConnectionFields for PhotoConnection {
     ) -> FieldResult<Vec<PhotoEdge>> {
         Ok(self.0.clone())
     }
-}
-
-pub async fn resolve_photo<'r, 'a>(
-    exec: &Executor<'r, 'a, Context>,
-    _: &QueryTrail<'r, Photo, Walked>,
-    id: String,
-) -> FieldResult<Photo> {
-    let photo = exec
-        .context()
-        .ddb_dao::<domain::photo::Photo>()
-        .get(id)
-        .map_err(FieldError::from)?;
-    Ok(Photo { photo })
 }

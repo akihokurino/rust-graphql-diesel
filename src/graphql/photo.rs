@@ -6,6 +6,7 @@ use juniper_from_schema::{QueryTrail, Walked};
 pub struct Photo {
     pub photo: domain::photo::Photo,
 }
+#[async_trait]
 impl PhotoFields for Photo {
     fn field_id(&self, _: &Executor<Context>) -> FieldResult<ID> {
         Ok(Into::into(self.photo.id.clone()))

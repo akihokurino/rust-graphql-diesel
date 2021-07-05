@@ -1,3 +1,4 @@
+use crate::ddb::photo;
 use crate::ddb::{Dao, DaoError, DaoResult};
 use crate::domain;
 use crate::schema::users;
@@ -57,6 +58,28 @@ impl Dao<domain::user::User> {
             .first(&self.conn)
             .map(|v: Entity| domain::user::User::try_from(v).unwrap())
             .map_err(DaoError::from)
+    }
+
+    pub fn get_with_photos(
+        &self,
+        id: String,
+    ) -> DaoResult<(domain::user::User, Vec<domain::photo::Photo>)> {
+        let user_entity = users::table
+            .find(id)
+            .first::<Entity>(&self.conn)
+            .map_err(DaoError::from)?;
+
+        let photo_entities = photo::Entity::belonging_to(&user_entity)
+            .load::<photo::Entity>(&self.conn)
+            .map_err(DaoError::from)?;
+
+        Ok((
+            domain::user::User::try_from(user_entity).unwrap(),
+            photo_entities
+                .into_iter()
+                .map(|v| domain::photo::Photo::try_from(v).unwrap())
+                .collect::<Vec<_>>(),
+        ))
     }
 
     pub fn insert(&self, item: domain::user::User) -> DaoResult<domain::user::User> {

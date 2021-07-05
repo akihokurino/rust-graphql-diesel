@@ -17,10 +17,10 @@ impl MeFields for Me {
         Ok(self.user.name.clone())
     }
 
-    async fn field_photos<'s, 'r, 'a>(
-        &'s self,
-        _exec: &Executor<'r, 'a, Context>,
-        _: &QueryTrail<'r, photo::PhotoConnection, Walked>,
+    fn field_photos<'r>(
+        &self,
+        _: &Executor<Context>,
+        _: &QueryTrail<'r, PhotoConnection, Walked>,
     ) -> FieldResult<photo::PhotoConnection> {
         Ok(photo::PhotoConnection(self.photos.clone()))
     }

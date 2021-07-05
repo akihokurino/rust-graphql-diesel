@@ -9,7 +9,6 @@ use juniper::{Executor, FieldResult};
 use juniper_from_schema::{QueryTrail, Walked};
 
 pub struct Mutation;
-
 #[async_trait]
 impl MutationFields for Mutation {
     async fn field_sign_up<'s, 'r, 'a>(

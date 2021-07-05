@@ -9,7 +9,6 @@ use juniper::{Executor, FieldResult};
 use juniper_from_schema::{QueryTrail, Walked};
 
 pub struct Query;
-
 #[async_trait]
 impl QueryFields for Query {
     async fn field_me<'s, 'r, 'a>(
@@ -24,12 +23,11 @@ impl QueryFields for Query {
             .clone()
             .ok_or(FieldError::from("unauthorized"))?;
 
-        let user = user_dao.get(authorized_user_id).map_err(FieldError::from)?;
+        let (user, photos) = user_dao
+            .get_with_photos(authorized_user_id)
+            .map_err(FieldError::from)?;
 
-        Ok(Me {
-            user,
-            photos: Vec::new(),
-        })
+        Ok(Me { user, photos })
     }
 
     async fn field_others<'s, 'r, 'a>(

@@ -6,6 +6,7 @@ use juniper_from_schema::{QueryTrail, Walked};
 pub struct Other {
     pub user: domain::user::User,
 }
+#[async_trait]
 impl OtherFields for Other {
     fn field_id(&self, _: &Executor<Context>) -> FieldResult<ID> {
         Ok(Into::into(self.user.id.clone()))
@@ -13,6 +14,21 @@ impl OtherFields for Other {
 
     fn field_name(&self, _: &Executor<Context>) -> FieldResult<String> {
         Ok(self.user.name.clone())
+    }
+
+    async fn field_photos<'s, 'r, 'a>(
+        &'s self,
+        exec: &Executor<'r, 'a, Context>,
+        _: &QueryTrail<'r, photo::PhotoConnection, Walked>,
+    ) -> FieldResult<photo::PhotoConnection> {
+        let ctx = exec.context();
+        let photo_dao = ctx.ddb_dao::<domain::photo::Photo>();
+
+        let photos = photo_dao
+            .get_all_by_user(self.user.id.clone())
+            .map_err(FieldError::from)?;
+
+        Ok(photo::PhotoConnection(photos.clone()))
     }
 }
 

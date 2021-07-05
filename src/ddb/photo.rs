@@ -1,10 +1,13 @@
+use crate::ddb::user;
 use crate::ddb::{Dao, DaoError, DaoResult};
 use crate::domain;
 use crate::schema::photos;
+use crate::schema::users;
 use diesel::prelude::*;
 use std::convert::TryFrom;
 
-#[derive(Queryable, Insertable, Debug, Clone, Eq, PartialEq)]
+#[derive(Queryable, Insertable, Debug, Clone, Eq, PartialEq, Identifiable, Associations)]
+#[belongs_to(user::Entity, foreign_key = "user_id")]
 #[table_name = "photos"]
 pub struct Entity {
     pub id: String,

@@ -35,6 +35,7 @@ interface Node {
 type Me implements Node {
     id: ID! @juniper(ownership: "owned")
     name: String! @juniper(ownership: "owned")
+    photos: PhotoConnection! @juniper(ownership: "owned", async: true)
 }
 
 type Other implements Node {

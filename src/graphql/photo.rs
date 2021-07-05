@@ -42,7 +42,7 @@ impl PhotoEdgeFields for PhotoEdge {
 }
 
 #[derive(Debug, Clone)]
-pub struct PhotoConnection(pub Vec<PhotoEdge>);
+pub struct PhotoConnection(pub Vec<domain::photo::Photo>);
 #[async_trait]
 impl PhotoConnectionFields for PhotoConnection {
     async fn field_edges<'s, 'r, 'a>(
@@ -50,6 +50,12 @@ impl PhotoConnectionFields for PhotoConnection {
         _exec: &Executor<'r, 'a, Context>,
         _: &QueryTrail<'r, PhotoEdge, Walked>,
     ) -> FieldResult<Vec<PhotoEdge>> {
-        Ok(self.0.clone())
+        let edges = self
+            .0
+            .clone()
+            .into_iter()
+            .map(|v| PhotoEdge { photo: v.clone() })
+            .collect::<Vec<_>>();
+        Ok(edges)
     }
 }

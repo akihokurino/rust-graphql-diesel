@@ -30,7 +30,10 @@ impl MutationFields for Mutation {
             return Err(FieldError::from(e));
         }
 
-        Ok(Me { user })
+        Ok(Me {
+            user,
+            photos: Vec::new(),
+        })
     }
 
     async fn field_update_user_info<'s, 'r, 'a>(
@@ -57,7 +60,10 @@ impl MutationFields for Mutation {
             return Err(FieldError::from(e));
         }
 
-        Ok(Me { user })
+        Ok(Me {
+            user,
+            photos: Vec::new(),
+        })
     }
 
     async fn field_leave<'s, 'r, 'a>(

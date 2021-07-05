@@ -26,7 +26,10 @@ impl QueryFields for Query {
 
         let user = user_dao.get(authorized_user_id).map_err(FieldError::from)?;
 
-        Ok(Me { user })
+        Ok(Me {
+            user,
+            photos: Vec::new(),
+        })
     }
 
     async fn field_others<'s, 'r, 'a>(
@@ -45,12 +48,7 @@ impl QueryFields for Query {
             .get_all_with_exclude(authorized_user_id)
             .map_err(FieldError::from)?;
 
-        let edges = others
-            .into_iter()
-            .map(|v| OtherEdge { user: v.clone() })
-            .collect::<Vec<_>>();
-
-        Ok(OtherConnection(edges))
+        Ok(OtherConnection(others))
     }
 
     async fn field_my_photos<'s, 'r, 'a>(
@@ -69,12 +67,7 @@ impl QueryFields for Query {
             .get_all_by_user(authorized_user_id)
             .map_err(FieldError::from)?;
 
-        let edges = photos
-            .into_iter()
-            .map(|v| PhotoEdge { photo: v.clone() })
-            .collect::<Vec<_>>();
-
-        Ok(PhotoConnection(edges))
+        Ok(PhotoConnection(photos))
     }
 
     async fn field_my_photo<'s, 'r, 'a>(

@@ -34,7 +34,7 @@ impl OtherEdgeFields for OtherEdge {
 }
 
 #[derive(Debug, Clone)]
-pub struct OtherConnection(pub Vec<OtherEdge>);
+pub struct OtherConnection(pub Vec<domain::user::User>);
 #[async_trait]
 impl OtherConnectionFields for OtherConnection {
     async fn field_edges<'s, 'r, 'a>(
@@ -42,6 +42,12 @@ impl OtherConnectionFields for OtherConnection {
         _exec: &Executor<'r, 'a, Context>,
         _: &QueryTrail<'r, OtherEdge, Walked>,
     ) -> FieldResult<Vec<OtherEdge>> {
-        Ok(self.0.clone())
+        let edges = self
+            .0
+            .clone()
+            .into_iter()
+            .map(|v| OtherEdge { user: v.clone() })
+            .collect::<Vec<_>>();
+        Ok(edges)
     }
 }

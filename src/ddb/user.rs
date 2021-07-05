@@ -4,7 +4,7 @@ use crate::schema::users;
 use diesel::prelude::*;
 use std::convert::TryFrom;
 
-#[derive(Queryable, Insertable, Debug, Clone, Eq, PartialEq)]
+#[derive(Queryable, Insertable, Debug, Clone, Eq, PartialEq, Identifiable)]
 #[table_name = "users"]
 pub struct Entity {
     pub id: String,

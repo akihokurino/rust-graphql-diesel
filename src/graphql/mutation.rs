@@ -106,7 +106,7 @@ impl MutationFields for Mutation {
             return Err(FieldError::from(e));
         }
 
-        Ok(Photo { photo })
+        Ok(Photo { photo, user: None })
     }
 
     async fn field_update_photo<'s, 'r, 'a>(
@@ -137,7 +137,7 @@ impl MutationFields for Mutation {
             return Err(FieldError::from(e));
         }
 
-        Ok(Photo { photo })
+        Ok(Photo { photo, user: None })
     }
 
     async fn field_delete_photo<'s, 'r, 'a>(

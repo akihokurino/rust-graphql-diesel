@@ -1,6 +1,7 @@
 use crate::ddb::photo;
 use crate::ddb::{Dao, DaoError, DaoResult};
 use crate::domain;
+use crate::schema::photos;
 use crate::schema::users;
 use diesel::prelude::*;
 use std::convert::TryFrom;
@@ -39,6 +40,36 @@ impl From<domain::user::User> for Entity {
 }
 
 impl Dao<domain::user::User> {
+    pub fn get_all_with_photos(
+        &self,
+    ) -> DaoResult<Vec<(domain::user::User, Vec<domain::photo::Photo>)>> {
+        let user_entities = users::table
+            .order(users::created_at.desc())
+            .load::<Entity>(&self.conn)
+            .map_err(DaoError::from)?;
+
+        let photo_entities = photo::Entity::belonging_to(&user_entities)
+            .order(photos::created_at.desc())
+            .load::<photo::Entity>(&self.conn)
+            .map_err(DaoError::from)?
+            .grouped_by(&user_entities);
+
+        let zipped = user_entities
+            .into_iter()
+            .zip(photo_entities)
+            .map(|v: (Entity, Vec<photo::Entity>)| {
+                (
+                    domain::user::User::try_from(v.0).unwrap(),
+                    v.1.into_iter()
+                        .map(|v| domain::photo::Photo::try_from(v).unwrap())
+                        .collect::<Vec<_>>(),
+                )
+            })
+            .collect::<Vec<_>>();
+
+        Ok(zipped)
+    }
+
     pub fn get_all_with_exclude(&self, exclude_id: String) -> DaoResult<Vec<domain::user::User>> {
         return users::table
             .filter(users::id.ne(exclude_id))
@@ -70,6 +101,7 @@ impl Dao<domain::user::User> {
             .map_err(DaoError::from)?;
 
         let photo_entities = photo::Entity::belonging_to(&user_entity)
+            .order(photos::created_at.desc())
             .load::<photo::Entity>(&self.conn)
             .map_err(DaoError::from)?;
 

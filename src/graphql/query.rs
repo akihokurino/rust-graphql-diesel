@@ -11,6 +11,26 @@ use juniper_from_schema::{QueryTrail, Walked};
 pub struct Query;
 #[async_trait]
 impl QueryFields for Query {
+    async fn field_all_users<'s, 'r, 'a>(
+        &'s self,
+        exec: &Executor<'r, 'a, Context>,
+        _: &QueryTrail<'r, OtherConnection, Walked>,
+    ) -> FieldResult<OtherConnection> {
+        let ctx = exec.context();
+        let user_dao = ctx.ddb_dao::<domain::user::User>();
+        let _authorized_user_id = ctx
+            .authorized_user_id
+            .clone()
+            .ok_or(FieldError::from("unauthorized"))?;
+
+        let others = user_dao
+            .get_all_with_photos()
+            .map(|v| v.into_iter().map(|v| (v.0, Some(v.1))).collect::<Vec<_>>())
+            .map_err(FieldError::from)?;
+
+        Ok(OtherConnection(others))
+    }
+
     async fn field_me<'s, 'r, 'a>(
         &'s self,
         exec: &Executor<'r, 'a, Context>,
@@ -44,9 +64,32 @@ impl QueryFields for Query {
 
         let others = user_dao
             .get_all_with_exclude(authorized_user_id)
+            .map(|v| v.into_iter().map(|v| (v, None)).collect::<Vec<_>>())
             .map_err(FieldError::from)?;
 
         Ok(OtherConnection(others))
+    }
+
+    async fn field_all_photos<'s, 'r, 'a>(
+        &'s self,
+        exec: &Executor<'r, 'a, Context>,
+        _: &QueryTrail<'r, PhotoConnection, Walked>,
+    ) -> FieldResult<PhotoConnection> {
+        let ctx = exec.context();
+        let photo_dao = ctx.ddb_dao::<domain::photo::Photo>();
+        let _authorized_user_id = ctx
+            .authorized_user_id
+            .clone()
+            .ok_or(FieldError::from("unauthorized"))?;
+
+        let photos = photo_dao.get_all_with_user().map_err(FieldError::from)?;
+
+        Ok(PhotoConnection(
+            photos
+                .into_iter()
+                .map(|v| (v.0, Some(v.1)))
+                .collect::<Vec<_>>(),
+        ))
     }
 
     async fn field_my_photos<'s, 'r, 'a>(
@@ -65,7 +108,9 @@ impl QueryFields for Query {
             .get_all_by_user(authorized_user_id)
             .map_err(FieldError::from)?;
 
-        Ok(PhotoConnection(photos))
+        Ok(PhotoConnection(
+            photos.into_iter().map(|v| (v, None)).collect::<Vec<_>>(),
+        ))
     }
 
     async fn field_my_photo<'s, 'r, 'a>(
@@ -88,6 +133,6 @@ impl QueryFields for Query {
             return Err(FieldError::from("forbidden"));
         }
 
-        Ok(Photo { photo })
+        Ok(Photo { photo, user: None })
     }
 }

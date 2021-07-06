@@ -13,8 +13,10 @@ schema {
 }
 
 type Query {
+    allUsers: OtherConnection! @juniper(ownership: "owned", async: true)
     me: Me! @juniper(ownership: "owned", async: true)
     others: OtherConnection! @juniper(ownership: "owned", async: true)
+    allPhotos: PhotoConnection! @juniper(ownership: "owned", async: true)
     myPhotos: PhotoConnection! @juniper(ownership: "owned", async: true)
     myPhoto(input: MyPhotoInput!): Photo! @juniper(ownership: "owned", async: true)
 }
@@ -57,6 +59,7 @@ type Photo implements Node {
     userId: ID! @juniper(ownership: "owned")
     url: String! @juniper(ownership: "owned")
     isPublic: Boolean! @juniper(ownership: "owned")
+    user: Other @juniper(ownership: "owned")
 }
 
 type PhotoEdge {

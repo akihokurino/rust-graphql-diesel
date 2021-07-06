@@ -1,7 +1,9 @@
+use crate::ddb::photo;
 use crate::ddb::user;
 use crate::ddb::{Dao, DaoError, DaoResult};
 use crate::domain;
 use crate::schema::photos;
+use crate::schema::users;
 use diesel::prelude::*;
 use std::convert::TryFrom;
 
@@ -46,6 +48,23 @@ impl From<domain::photo::Photo> for Entity {
 }
 
 impl Dao<domain::photo::Photo> {
+    pub fn get_all_with_user(&self) -> DaoResult<Vec<(domain::photo::Photo, domain::user::User)>> {
+        let join = photos::table.inner_join(users::table);
+
+        join.load::<(photo::Entity, user::Entity)>(&self.conn)
+            .map(|v: Vec<(photo::Entity, user::Entity)>| {
+                v.into_iter()
+                    .map(|v| {
+                        (
+                            domain::photo::Photo::try_from(v.0).unwrap(),
+                            domain::user::User::try_from(v.1).unwrap(),
+                        )
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .map_err(DaoError::from)
+    }
+
     pub fn get_all_by_user(&self, user_id: String) -> DaoResult<Vec<domain::photo::Photo>> {
         return photos::table
             .filter(photos::user_id.eq(user_id))

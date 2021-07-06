@@ -22,6 +22,12 @@ impl MeFields for Me {
         _: &Executor<Context>,
         _: &QueryTrail<'r, PhotoConnection, Walked>,
     ) -> FieldResult<photo::PhotoConnection> {
-        Ok(photo::PhotoConnection(self.photos.clone()))
+        Ok(photo::PhotoConnection(
+            self.photos
+                .clone()
+                .into_iter()
+                .map(|v| (v, None))
+                .collect::<Vec<_>>(),
+        ))
     }
 }

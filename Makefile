@@ -1,11 +1,10 @@
 MAKEFLAGS=--no-builtin-rules --no-builtin-variables --always-make
 ROOT := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
 
-run-db:
+run-local:
 	docker-compose up
 
-run-local:
-	cargo run
-
 build:
+	export SCCACHE_DIR=.cache/sccache
+	export RUSTC_WRAPPER=${HOME}/.cargo/bin/sccache
 	cargo build

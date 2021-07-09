@@ -1,6 +1,12 @@
 # rust-graphql-sample
 Rustの練習用プロジェクト
 
+## Cargo
+
+```
+cargo install sccache
+```
+
 ## diesel
 
 ```

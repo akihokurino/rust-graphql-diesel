@@ -1,9 +1,9 @@
 use crate::ddb::photo;
+use crate::ddb::schema::photos;
+use crate::ddb::schema::users;
 use crate::ddb::user;
 use crate::ddb::{Dao, DaoError, DaoResult};
 use crate::domain;
-use crate::schema::photos;
-use crate::schema::users;
 use diesel::prelude::*;
 use std::convert::TryFrom;
 

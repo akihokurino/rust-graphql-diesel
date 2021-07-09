@@ -1,16 +1,15 @@
 #[macro_use]
 extern crate diesel;
 
-mod ddb;
-mod domain;
-mod graphql;
-mod schema;
-
-use dotenv::dotenv;
 use std::env;
 
 use actix_web::{error, web, App, HttpRequest, HttpResponse, HttpServer};
+use dotenv::dotenv;
 use juniper_actix::{graphql_handler, playground_handler};
+
+mod ddb;
+mod domain;
+mod graphql;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

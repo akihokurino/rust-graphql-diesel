@@ -1,11 +1,13 @@
-pub mod photo;
-pub mod user;
+use std::env;
+use std::marker::PhantomData;
 
 use diesel::mysql::MysqlConnection;
 use diesel::prelude::*;
-use std::env;
-use std::marker::PhantomData;
 use thiserror::Error;
+
+pub mod photo;
+mod schema;
+pub mod user;
 
 pub fn establish_connection() -> MysqlConnection {
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");

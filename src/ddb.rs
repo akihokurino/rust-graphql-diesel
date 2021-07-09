@@ -25,12 +25,21 @@ impl<T> Dao<T> {
             _phantom: PhantomData,
         }
     }
+
+    pub fn tx<R, F>(&self, exec: F) -> DaoResult<R>
+    where
+        F: FnOnce() -> DaoResult<R>,
+    {
+        self.conn.transaction(|| exec())
+    }
 }
 
 #[derive(Error, Debug)]
 pub enum DaoError {
     #[error("notfound")]
     NotFound,
+    #[error("forbidden")]
+    Forbidden,
     #[error("internal error: {0}")]
     InternalError(String),
 }

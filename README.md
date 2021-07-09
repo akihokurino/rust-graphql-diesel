@@ -1,4 +1,4 @@
-# photos-server
+# rust-graphql-sample
 Rustの練習用プロジェクト
 
 ## diesel

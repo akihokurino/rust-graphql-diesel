@@ -1429,25 +1429,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d4fd5641d01c8f18a23da7b6fe29298ff4b55afcccdf78973b24cf3175fee32e"
 
 [[package]]
-name = "photos-server"
-version = "0.1.0"
-dependencies = [
- "actix-cors",
- "actix-web",
- "async-trait",
- "chrono",
- "diesel",
- "diesel_migrations",
- "dotenv",
- "juniper",
- "juniper-from-schema",
- "juniper_actix",
- "serde",
- "thiserror",
- "uuid",
-]
-
-[[package]]
 name = "pin-project"
 version = "0.4.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1652,6 +1633,25 @@ checksum = "52e44394d2086d010551b14b53b1f24e31647570cd1deb0379e2c21b329aba00"
 dependencies = [
  "hostname",
  "quick-error",
+]
+
+[[package]]
+name = "rust-graphql-sample"
+version = "0.1.0"
+dependencies = [
+ "actix-cors",
+ "actix-web",
+ "async-trait",
+ "chrono",
+ "diesel",
+ "diesel_migrations",
+ "dotenv",
+ "juniper",
+ "juniper-from-schema",
+ "juniper_actix",
+ "serde",
+ "thiserror",
+ "uuid",
 ]
 
 [[package]]

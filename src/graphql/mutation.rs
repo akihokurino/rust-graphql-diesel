@@ -1,3 +1,4 @@
+use crate::ddb::DaoError;
 use crate::domain;
 use crate::graphql::me::Me;
 use crate::graphql::photo::Photo;
@@ -51,13 +52,17 @@ impl MutationFields for Mutation {
         let now: DateTime<Utc> = Utc::now();
         let name = input.name;
 
-        let mut user = user_dao.get(authorized_user_id).map_err(FieldError::from)?;
+        let user = user_dao
+            .tx(|| {
+                let mut user = user_dao.get(authorized_user_id)?;
 
-        user.update(name, now);
+                user.update(name, now);
 
-        if let Err(e) = user_dao.update(user.clone()) {
-            return Err(FieldError::from(e));
-        }
+                user_dao.update(user.clone())?;
+
+                Ok(user)
+            })
+            .map_err(FieldError::from)?;
 
         Ok(Me {
             user,
@@ -126,16 +131,20 @@ impl MutationFields for Mutation {
         let id = input.id;
         let is_public = input.is_public;
 
-        let mut photo = photo_dao.get(id.clone()).map_err(FieldError::from)?;
-        if photo.user_id != authorized_user_id {
-            return Err(FieldError::from("forbidden"));
-        }
+        let photo = photo_dao
+            .tx(|| {
+                let mut photo = photo_dao.get(id.clone())?;
+                if photo.user_id != authorized_user_id {
+                    return Err(DaoError::Forbidden);
+                }
 
-        photo.update_visibility(is_public, now);
+                photo.update_visibility(is_public, now);
 
-        if let Err(e) = photo_dao.update(photo.clone()) {
-            return Err(FieldError::from(e));
-        }
+                photo_dao.update(photo.clone())?;
+
+                Ok(photo)
+            })
+            .map_err(FieldError::from)?;
 
         Ok(Photo { photo, user: None })
     }

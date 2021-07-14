@@ -86,7 +86,7 @@ impl Dao<domain::photo::Photo> {
             .map_err(DaoError::from)
     }
 
-    pub fn insert(&self, item: domain::photo::Photo) -> DaoResult<domain::photo::Photo> {
+    pub fn insert(&self, item: &domain::photo::Photo) -> DaoResult<()> {
         let e: Entity = item.clone().into();
         if let Err(e) = diesel::insert_into(photos::table)
             .values(e)
@@ -95,10 +95,10 @@ impl Dao<domain::photo::Photo> {
         {
             return Err(e);
         }
-        Ok(item)
+        Ok(())
     }
 
-    pub fn update(&self, item: domain::photo::Photo) -> DaoResult<domain::photo::Photo> {
+    pub fn update(&self, item: &domain::photo::Photo) -> DaoResult<()> {
         let e: Entity = item.clone().into();
         if let Err(e) = diesel::update(photos::table.find(e.id))
             .set((
@@ -110,7 +110,7 @@ impl Dao<domain::photo::Photo> {
         {
             return Err(e);
         }
-        Ok(item)
+        Ok(())
     }
 
     pub fn delete(&self, id: String) -> DaoResult<bool> {

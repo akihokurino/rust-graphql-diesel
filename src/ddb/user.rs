@@ -114,7 +114,7 @@ impl Dao<domain::user::User> {
         ))
     }
 
-    pub fn insert(&self, item: domain::user::User) -> DaoResult<domain::user::User> {
+    pub fn insert(&self, item: &domain::user::User) -> DaoResult<()> {
         let e: Entity = item.clone().into();
         if let Err(e) = diesel::insert_into(users::table)
             .values(e)
@@ -123,10 +123,10 @@ impl Dao<domain::user::User> {
         {
             return Err(e);
         }
-        Ok(item)
+        Ok(())
     }
 
-    pub fn update(&self, item: domain::user::User) -> DaoResult<domain::user::User> {
+    pub fn update(&self, item: &domain::user::User) -> DaoResult<()> {
         let e: Entity = item.clone().into();
         if let Err(e) = diesel::update(users::table.find(e.id))
             .set((users::name.eq(e.name), users::updated_at.eq(e.updated_at)))
@@ -135,7 +135,7 @@ impl Dao<domain::user::User> {
         {
             return Err(e);
         }
-        Ok(item)
+        Ok(())
     }
 
     pub fn delete(&self, id: String) -> DaoResult<bool> {

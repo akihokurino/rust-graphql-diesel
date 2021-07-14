@@ -26,7 +26,7 @@ impl MutationFields for Mutation {
 
         let user = domain::user::User::new(name, now);
 
-        if let Err(e) = user_dao.insert(user.clone()) {
+        if let Err(e) = user_dao.insert(&user) {
             return Err(FieldError::from(e));
         }
 
@@ -58,7 +58,7 @@ impl MutationFields for Mutation {
 
                 user.update(name, now);
 
-                user_dao.update(user.clone())?;
+                user_dao.update(&user)?;
 
                 Ok(user)
             })
@@ -107,7 +107,7 @@ impl MutationFields for Mutation {
 
         let photo = domain::photo::Photo::new(authorized_user_id, url, is_public, now);
 
-        if let Err(e) = photo_dao.insert(photo.clone()) {
+        if let Err(e) = photo_dao.insert(&photo) {
             return Err(FieldError::from(e));
         }
 
@@ -140,7 +140,7 @@ impl MutationFields for Mutation {
 
                 photo.update_visibility(is_public, now);
 
-                photo_dao.update(photo.clone())?;
+                photo_dao.update(&photo)?;
 
                 Ok(photo)
             })

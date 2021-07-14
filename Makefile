@@ -10,7 +10,7 @@ build_linux:
 # MacでSCCACHE_DIRが機能していない
 # rustc 1.53.0
 # sccache 0.2.15
-build_mac:
+build:
 	sccache --start-server
 	mkdir -p .cache/sccache
 	SCCACHE_CACHE_SIZE=5G \

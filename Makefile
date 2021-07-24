@@ -4,9 +4,6 @@ ROOT := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
 run-local:
 	docker-compose up
 
-build_linux:
-	cargo build --target x86_64-unknown-linux-musl
-
 # MacでSCCACHE_DIRが機能していない
 # rustc 1.53.0
 # sccache 0.2.15

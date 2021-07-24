@@ -4,7 +4,8 @@
 - rust 1.53.0
 - sccache
 - diesel
-- junipher (graphql)
+- junipher
+https://github.com/graphql-rust/juniper
 
 ## diesel
 ```

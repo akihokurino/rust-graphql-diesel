@@ -23,6 +23,7 @@ impl OtherFields for Other {
         _: &QueryTrail<'r, photo::PhotoConnection, Walked>,
     ) -> FieldResult<photo::PhotoConnection> {
         let ctx = exec.context();
+        let conn = ddb::establish_connection();
         let photo_dao = ctx.ddb_dao::<domain::photo::Photo>();
 
         if let Some(photos) = self.photos.clone() {
@@ -36,7 +37,7 @@ impl OtherFields for Other {
         }
 
         let photos = photo_dao
-            .get_all_by_user(self.user.id.clone())
+            .get_all_by_user(&conn, self.user.id.clone())
             .map_err(FieldError::from)?;
 
         Ok(photo::PhotoConnection(

@@ -4,6 +4,8 @@ use std::marker::PhantomData;
 use diesel::mysql::MysqlConnection;
 use diesel::prelude::*;
 use thiserror::Error;
+use std::future::Future;
+use diesel::connection::TransactionManager;
 
 pub mod photo;
 mod schema;
@@ -16,23 +18,43 @@ pub fn establish_connection() -> MysqlConnection {
 }
 
 pub struct Dao<T> {
-    pub conn: MysqlConnection,
     _phantom: PhantomData<fn() -> T>,
 }
 
 impl<T> Dao<T> {
-    pub fn new(conn: MysqlConnection) -> Self {
+    pub fn new() -> Self {
         Dao {
-            conn,
             _phantom: PhantomData,
         }
     }
+}
 
-    pub fn tx<R, F>(&self, exec: F) -> DaoResult<R>
-    where
-        F: FnOnce() -> DaoResult<R>,
+pub struct Tx {}
+
+impl Tx {
+    pub fn run<R, F>(conn: &MysqlConnection, f: F) -> DaoResult<R>
+        where
+            F: FnOnce() -> DaoResult<R>,
     {
-        self.conn.transaction(|| exec())
+        conn.transaction(|| f())
+    }
+
+    pub async fn run_async<R, F>(conn: &MysqlConnection, f: F) -> DaoResult<R>
+        where
+            F: Future<Output = DaoResult<R>>,
+    {
+        let transaction_manager = conn.transaction_manager();
+        transaction_manager.begin_transaction(conn)?;
+        match f.await {
+            Ok(value) => {
+                transaction_manager.commit_transaction(conn)?;
+                Ok(value)
+            }
+            Err(e) => {
+                transaction_manager.rollback_transaction(conn)?;
+                Err(e)
+            }
+        }
     }
 }
 

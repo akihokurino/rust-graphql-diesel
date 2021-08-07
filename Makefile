@@ -4,23 +4,11 @@ ROOT := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
 run-local:
 	docker-compose up
 
-# MacでSCCACHE_DIRが機能していない
-# rustc 1.53.0
-# sccache 0.2.15
 build:
-	sccache --start-server
-	mkdir -p .cache/sccache
 	SCCACHE_CACHE_SIZE=5G \
-    SCCACHE_DIR=.cache/sccache \
     RUSTC_WRAPPER=`which sccache` \
     cargo build
-	cp -r ~/Library/Caches/Mozilla.sccache/* .cache/sccache
-	sccache --stop-server
-
-stop-sccache-server:
-	sccache --stop-server
 
 clean:
 	cargo clean
-	rm -rf .cache
 	docker-compose down --rmi all

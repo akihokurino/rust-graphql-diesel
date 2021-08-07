@@ -25,8 +25,7 @@ impl juniper::Context for Context {}
 
 impl Context {
     pub fn ddb_dao<T>(&self) -> ddb::Dao<T> {
-        let conn = ddb::establish_connection();
-        ddb::Dao::new(conn)
+        ddb::Dao::new()
     }
 }
 

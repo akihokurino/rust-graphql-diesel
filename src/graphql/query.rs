@@ -17,6 +17,7 @@ impl QueryFields for Query {
         _: &QueryTrail<'r, OtherConnection, Walked>,
     ) -> FieldResult<OtherConnection> {
         let ctx = exec.context();
+        let conn = ddb::establish_connection();
         let user_dao = ctx.ddb_dao::<domain::user::User>();
         let _authorized_user_id = ctx
             .authorized_user_id
@@ -24,7 +25,7 @@ impl QueryFields for Query {
             .ok_or(FieldError::from("unauthorized"))?;
 
         let others = user_dao
-            .get_all_with_photos()
+            .get_all_with_photos(&conn)
             .map(|v| v.into_iter().map(|v| (v.0, Some(v.1))).collect::<Vec<_>>())
             .map_err(FieldError::from)?;
 
@@ -37,6 +38,7 @@ impl QueryFields for Query {
         _: &QueryTrail<'r, Me, Walked>,
     ) -> FieldResult<Me> {
         let ctx = exec.context();
+        let conn = ddb::establish_connection();
         let user_dao = ctx.ddb_dao::<domain::user::User>();
         let authorized_user_id = ctx
             .authorized_user_id
@@ -44,7 +46,7 @@ impl QueryFields for Query {
             .ok_or(FieldError::from("unauthorized"))?;
 
         let (user, photos) = user_dao
-            .get_with_photos(authorized_user_id)
+            .get_with_photos(&conn, authorized_user_id)
             .map_err(FieldError::from)?;
 
         Ok(Me { user, photos })
@@ -56,6 +58,7 @@ impl QueryFields for Query {
         _: &QueryTrail<'r, OtherConnection, Walked>,
     ) -> FieldResult<OtherConnection> {
         let ctx = exec.context();
+        let conn = ddb::establish_connection();
         let user_dao = ctx.ddb_dao::<domain::user::User>();
         let authorized_user_id = ctx
             .authorized_user_id
@@ -63,7 +66,7 @@ impl QueryFields for Query {
             .ok_or(FieldError::from("unauthorized"))?;
 
         let others = user_dao
-            .get_all_with_exclude(authorized_user_id)
+            .get_all_with_exclude(&conn, authorized_user_id)
             .map(|v| v.into_iter().map(|v| (v, None)).collect::<Vec<_>>())
             .map_err(FieldError::from)?;
 
@@ -76,13 +79,14 @@ impl QueryFields for Query {
         _: &QueryTrail<'r, PhotoConnection, Walked>,
     ) -> FieldResult<PhotoConnection> {
         let ctx = exec.context();
+        let conn = ddb::establish_connection();
         let photo_dao = ctx.ddb_dao::<domain::photo::Photo>();
         let _authorized_user_id = ctx
             .authorized_user_id
             .clone()
             .ok_or(FieldError::from("unauthorized"))?;
 
-        let photos = photo_dao.get_all_with_user().map_err(FieldError::from)?;
+        let photos = photo_dao.get_all_with_user(&conn).map_err(FieldError::from)?;
 
         Ok(PhotoConnection(
             photos
@@ -98,6 +102,7 @@ impl QueryFields for Query {
         _: &QueryTrail<'r, PhotoConnection, Walked>,
     ) -> FieldResult<PhotoConnection> {
         let ctx = exec.context();
+        let conn = ddb::establish_connection();
         let photo_dao = ctx.ddb_dao::<domain::photo::Photo>();
         let authorized_user_id = ctx
             .authorized_user_id
@@ -105,7 +110,7 @@ impl QueryFields for Query {
             .ok_or(FieldError::from("unauthorized"))?;
 
         let photos = photo_dao
-            .get_all_by_user(authorized_user_id)
+            .get_all_by_user(&conn, authorized_user_id)
             .map_err(FieldError::from)?;
 
         Ok(PhotoConnection(
@@ -120,6 +125,7 @@ impl QueryFields for Query {
         input: MyPhotoInput,
     ) -> FieldResult<Photo> {
         let ctx = exec.context();
+        let conn = ddb::establish_connection();
         let photo_dao = ctx.ddb_dao::<domain::photo::Photo>();
         let authorized_user_id = ctx
             .authorized_user_id
@@ -128,7 +134,7 @@ impl QueryFields for Query {
 
         let id = input.id;
 
-        let photo = photo_dao.get(id.clone()).map_err(FieldError::from)?;
+        let photo = photo_dao.get(&conn, id.clone()).map_err(FieldError::from)?;
         if photo.user_id != authorized_user_id {
             return Err(FieldError::from("forbidden"));
         }

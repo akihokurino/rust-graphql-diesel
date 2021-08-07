@@ -48,10 +48,10 @@ impl From<domain::photo::Photo> for Entity {
 }
 
 impl Dao<domain::photo::Photo> {
-    pub fn get_all_with_user(&self) -> DaoResult<Vec<(domain::photo::Photo, domain::user::User)>> {
+    pub fn get_all_with_user(&self, conn: &MysqlConnection) -> DaoResult<Vec<(domain::photo::Photo, domain::user::User)>> {
         let join = photos::table.inner_join(users::table);
 
-        join.load::<(photo::Entity, user::Entity)>(&self.conn)
+        join.load::<(photo::Entity, user::Entity)>(conn)
             .map(|v: Vec<(photo::Entity, user::Entity)>| {
                 v.into_iter()
                     .map(|v| {
@@ -65,11 +65,11 @@ impl Dao<domain::photo::Photo> {
             .map_err(DaoError::from)
     }
 
-    pub fn get_all_by_user(&self, user_id: String) -> DaoResult<Vec<domain::photo::Photo>> {
+    pub fn get_all_by_user(&self, conn: &MysqlConnection, user_id: String) -> DaoResult<Vec<domain::photo::Photo>> {
         return photos::table
             .filter(photos::user_id.eq(user_id))
             .order(photos::created_at.desc())
-            .load::<Entity>(&self.conn)
+            .load::<Entity>(conn)
             .map(|v: Vec<Entity>| {
                 v.into_iter()
                     .map(|v| domain::photo::Photo::try_from(v).unwrap())
@@ -78,19 +78,19 @@ impl Dao<domain::photo::Photo> {
             .map_err(DaoError::from);
     }
 
-    pub fn get(&self, id: String) -> DaoResult<domain::photo::Photo> {
+    pub fn get(&self, conn: &MysqlConnection, id: String) -> DaoResult<domain::photo::Photo> {
         photos::table
             .find(id)
-            .first(&self.conn)
+            .first(conn)
             .map(|v: Entity| domain::photo::Photo::try_from(v).unwrap())
             .map_err(DaoError::from)
     }
 
-    pub fn insert(&self, item: &domain::photo::Photo) -> DaoResult<()> {
+    pub fn insert(&self, conn: &MysqlConnection, item: &domain::photo::Photo) -> DaoResult<()> {
         let e: Entity = item.clone().into();
         if let Err(e) = diesel::insert_into(photos::table)
             .values(e)
-            .execute(&self.conn)
+            .execute(conn)
             .map_err(DaoError::from)
         {
             return Err(e);
@@ -98,14 +98,14 @@ impl Dao<domain::photo::Photo> {
         Ok(())
     }
 
-    pub fn update(&self, item: &domain::photo::Photo) -> DaoResult<()> {
+    pub fn update(&self, conn: &MysqlConnection, item: &domain::photo::Photo) -> DaoResult<()> {
         let e: Entity = item.clone().into();
         if let Err(e) = diesel::update(photos::table.find(e.id))
             .set((
                 photos::is_public.eq(e.is_public),
                 photos::updated_at.eq(e.updated_at),
             ))
-            .execute(&self.conn)
+            .execute(conn)
             .map_err(DaoError::from)
         {
             return Err(e);
@@ -113,9 +113,9 @@ impl Dao<domain::photo::Photo> {
         Ok(())
     }
 
-    pub fn delete(&self, id: String) -> DaoResult<bool> {
+    pub fn delete(&self, conn: &MysqlConnection, id: String) -> DaoResult<bool> {
         if let Err(e) = diesel::delete(photos::table.find(id))
-            .execute(&self.conn)
+            .execute(conn)
             .map_err(DaoError::from)
         {
             return Err(e);

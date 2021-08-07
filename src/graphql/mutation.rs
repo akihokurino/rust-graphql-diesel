@@ -1,4 +1,4 @@
-use crate::ddb::DaoError;
+use crate::ddb::{DaoError, Tx};
 use crate::domain;
 use crate::graphql::me::Me;
 use crate::graphql::photo::Photo;
@@ -19,6 +19,7 @@ impl MutationFields for Mutation {
         input: SignUpInput,
     ) -> FieldResult<Me> {
         let ctx = exec.context();
+        let conn = ddb::establish_connection();
         let user_dao = ctx.ddb_dao::<domain::user::User>();
 
         let now: DateTime<Utc> = Utc::now();
@@ -26,7 +27,7 @@ impl MutationFields for Mutation {
 
         let user = domain::user::User::new(name, now);
 
-        if let Err(e) = user_dao.insert(&user) {
+        if let Err(e) = user_dao.insert(&conn, &user) {
             return Err(FieldError::from(e));
         }
 
@@ -43,6 +44,7 @@ impl MutationFields for Mutation {
         input: UpdateUserInfoInput,
     ) -> FieldResult<Me> {
         let ctx = exec.context();
+        let conn = ddb::establish_connection();
         let user_dao = ctx.ddb_dao::<domain::user::User>();
         let authorized_user_id = ctx
             .authorized_user_id
@@ -52,13 +54,12 @@ impl MutationFields for Mutation {
         let now: DateTime<Utc> = Utc::now();
         let name = input.name;
 
-        let user = user_dao
-            .tx(|| {
-                let mut user = user_dao.get(authorized_user_id)?;
+        let user = Tx::run(&conn, || {
+                let mut user = user_dao.get(&conn, authorized_user_id)?;
 
                 user.update(name, now);
 
-                user_dao.update(&user)?;
+                user_dao.update(&conn, &user)?;
 
                 Ok(user)
             })
@@ -75,13 +76,14 @@ impl MutationFields for Mutation {
         exec: &Executor<'r, 'a, Context>,
     ) -> FieldResult<bool> {
         let ctx = exec.context();
+        let conn = ddb::establish_connection();
         let user_dao = ctx.ddb_dao::<domain::user::User>();
         let authorized_user_id = ctx
             .authorized_user_id
             .clone()
             .ok_or(FieldError::from("unauthorized"))?;
 
-        if let Err(e) = user_dao.delete(authorized_user_id) {
+        if let Err(e) = user_dao.delete(&conn, authorized_user_id) {
             return Err(FieldError::from(e));
         }
 
@@ -95,6 +97,7 @@ impl MutationFields for Mutation {
         input: CreatePhotoInput,
     ) -> FieldResult<Photo> {
         let ctx = exec.context();
+        let conn = ddb::establish_connection();
         let photo_dao = ctx.ddb_dao::<domain::photo::Photo>();
         let authorized_user_id = ctx
             .authorized_user_id
@@ -107,7 +110,7 @@ impl MutationFields for Mutation {
 
         let photo = domain::photo::Photo::new(authorized_user_id, url, is_public, now);
 
-        if let Err(e) = photo_dao.insert(&photo) {
+        if let Err(e) = photo_dao.insert(&conn, &photo) {
             return Err(FieldError::from(e));
         }
 
@@ -121,6 +124,7 @@ impl MutationFields for Mutation {
         input: UpdatePhotoInput,
     ) -> FieldResult<Photo> {
         let ctx = exec.context();
+        let conn = ddb::establish_connection();
         let photo_dao = ctx.ddb_dao::<domain::photo::Photo>();
         let authorized_user_id = ctx
             .authorized_user_id
@@ -131,16 +135,15 @@ impl MutationFields for Mutation {
         let id = input.id;
         let is_public = input.is_public;
 
-        let photo = photo_dao
-            .tx(|| {
-                let mut photo = photo_dao.get(id.clone())?;
+        let photo = Tx::run(&conn, || {
+                let mut photo = photo_dao.get(&conn, id.clone())?;
                 if photo.user_id != authorized_user_id {
                     return Err(DaoError::Forbidden);
                 }
 
                 photo.update_visibility(is_public, now);
 
-                photo_dao.update(&photo)?;
+                photo_dao.update(&conn, &photo)?;
 
                 Ok(photo)
             })
@@ -155,6 +158,7 @@ impl MutationFields for Mutation {
         input: DeletePhotoInput,
     ) -> FieldResult<bool> {
         let ctx = exec.context();
+        let conn = ddb::establish_connection();
         let photo_dao = ctx.ddb_dao::<domain::photo::Photo>();
         let authorized_user_id = ctx
             .authorized_user_id
@@ -163,12 +167,12 @@ impl MutationFields for Mutation {
 
         let id = input.id;
 
-        let photo = photo_dao.get(id.clone()).map_err(FieldError::from)?;
+        let photo = photo_dao.get(&conn, id.clone()).map_err(FieldError::from)?;
         if photo.user_id != authorized_user_id {
             return Err(FieldError::from("forbidden"));
         }
 
-        if let Err(e) = photo_dao.delete(id.clone()) {
+        if let Err(e) = photo_dao.delete(&conn, id.clone()) {
             return Err(FieldError::from(e));
         }
 

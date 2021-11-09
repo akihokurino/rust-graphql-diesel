@@ -22,10 +22,14 @@ impl MeFields for Me {
         _: &Executor<Context>,
         _: &QueryTrail<'r, Photo, Walked>,
     ) -> FieldResult<Vec<Photo>> {
-        Ok(self.photos
+        Ok(self
+            .photos
             .clone()
             .iter()
-            .map(|v| Photo{photo: v.to_owned(), user: None})
+            .map(|v| Photo {
+                photo: v.to_owned(),
+                user: None,
+            })
             .collect::<Vec<_>>())
     }
 }

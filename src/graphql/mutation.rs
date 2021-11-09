@@ -1,5 +1,6 @@
 use crate::ddb::{DaoError, Tx};
 use crate::domain;
+use crate::graphql::errors::FieldErrorWithCode;
 use crate::graphql::me::Me;
 use crate::graphql::photo::Photo;
 use crate::graphql::Context;
@@ -8,7 +9,6 @@ use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use juniper::{Executor, FieldResult};
 use juniper_from_schema::{QueryTrail, Walked};
-use crate::graphql::errors::FieldErrorWithCode;
 
 pub struct Mutation;
 
@@ -28,7 +28,7 @@ impl MutationFields for Mutation {
         let name: String = input.name;
 
         if name.is_empty() {
-            return Err(FieldErrorWithCode::bad_request().into())
+            return Err(FieldErrorWithCode::bad_request().into());
         }
 
         let user = domain::user::User::new(name, now);
@@ -61,19 +61,19 @@ impl MutationFields for Mutation {
         let name: String = input.name;
 
         if name.is_empty() {
-            return Err(FieldErrorWithCode::bad_request().into())
+            return Err(FieldErrorWithCode::bad_request().into());
         }
 
         let user = Tx::run(&conn, || {
-                let mut user = user_dao.get(&conn, authorized_user_id)?;
+            let mut user = user_dao.get(&conn, authorized_user_id)?;
 
-                user.update(name, now);
+            user.update(name, now);
 
-                user_dao.update(&conn, &user)?;
+            user_dao.update(&conn, &user)?;
 
-                Ok(user)
-            })
-            .map_err(FieldErrorWithCode::from)?;
+            Ok(user)
+        })
+        .map_err(FieldErrorWithCode::from)?;
 
         Ok(Me {
             user,
@@ -119,7 +119,7 @@ impl MutationFields for Mutation {
         let is_public = input.is_public;
 
         if url.is_empty() {
-            return Err(FieldErrorWithCode::bad_request().into())
+            return Err(FieldErrorWithCode::bad_request().into());
         }
 
         let photo = domain::photo::Photo::new(authorized_user_id, url, is_public, now);
@@ -150,18 +150,18 @@ impl MutationFields for Mutation {
         let is_public = input.is_public;
 
         let photo = Tx::run(&conn, || {
-                let mut photo = photo_dao.get(&conn, id.clone())?;
-                if photo.user_id != authorized_user_id {
-                    return Err(DaoError::Forbidden);
-                }
+            let mut photo = photo_dao.get(&conn, id.clone())?;
+            if photo.user_id != authorized_user_id {
+                return Err(DaoError::Forbidden);
+            }
 
-                photo.update_visibility(is_public, now);
+            photo.update_visibility(is_public, now);
 
-                photo_dao.update(&conn, &photo)?;
+            photo_dao.update(&conn, &photo)?;
 
-                Ok(photo)
-            })
-            .map_err(FieldErrorWithCode::from)?;
+            Ok(photo)
+        })
+        .map_err(FieldErrorWithCode::from)?;
 
         Ok(Photo { photo, user: None })
     }
@@ -181,7 +181,9 @@ impl MutationFields for Mutation {
 
         let id = input.id;
 
-        let photo = photo_dao.get(&conn, id.clone()).map_err(FieldErrorWithCode::from)?;
+        let photo = photo_dao
+            .get(&conn, id.clone())
+            .map_err(FieldErrorWithCode::from)?;
         if photo.user_id != authorized_user_id {
             return Err(FieldErrorWithCode::forbidden().into());
         }

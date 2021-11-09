@@ -4,8 +4,12 @@ use crate::ddb::schema::users;
 use crate::ddb::user;
 use crate::ddb::{Dao, DaoError, DaoResult};
 use crate::domain;
+use async_trait::async_trait;
+use dataloader::{cached, BatchFn};
 use diesel::prelude::*;
+use std::collections::HashMap;
 use std::convert::TryFrom;
+use std::sync::{Arc, Mutex};
 
 #[derive(Queryable, Insertable, Debug, Clone, Eq, PartialEq, Identifiable, Associations)]
 #[belongs_to(user::Entity, foreign_key = "user_id")]
@@ -48,7 +52,10 @@ impl From<domain::photo::Photo> for Entity {
 }
 
 impl Dao<domain::photo::Photo> {
-    pub fn get_all_with_user(&self, conn: &MysqlConnection) -> DaoResult<Vec<(domain::photo::Photo, domain::user::User)>> {
+    pub fn get_all_with_user(
+        &self,
+        conn: &MysqlConnection,
+    ) -> DaoResult<Vec<(domain::photo::Photo, domain::user::User)>> {
         let join = photos::table.inner_join(users::table);
 
         join.load::<(photo::Entity, user::Entity)>(conn)
@@ -65,7 +72,11 @@ impl Dao<domain::photo::Photo> {
             .map_err(DaoError::from)
     }
 
-    pub fn get_all_by_user(&self, conn: &MysqlConnection, user_id: String) -> DaoResult<Vec<domain::photo::Photo>> {
+    pub fn get_all_by_user(
+        &self,
+        conn: &MysqlConnection,
+        user_id: String,
+    ) -> DaoResult<Vec<domain::photo::Photo>> {
         return photos::table
             .filter(photos::user_id.eq(user_id))
             .order(photos::created_at.desc())
@@ -122,4 +133,70 @@ impl Dao<domain::photo::Photo> {
         }
         Ok(true)
     }
+
+    fn batch_get_all_by_user(
+        &self,
+        conn: &MysqlConnection,
+        hashmap: &mut HashMap<String, DaoResult<Vec<domain::photo::Photo>>>,
+        user_ids: Vec<String>,
+    ) {
+        let result: DaoResult<Vec<domain::photo::Photo>> = photos::table
+            .filter(photos::user_id.eq_any(user_ids.clone()))
+            .order(photos::created_at.desc())
+            .load::<Entity>(conn)
+            .map(|v: Vec<Entity>| {
+                v.into_iter()
+                    .map(|v| domain::photo::Photo::try_from(v).unwrap())
+                    .collect::<Vec<_>>()
+            })
+            .map_err(DaoError::from);
+
+        if let Err(e) = result {
+            for id in user_ids {
+                hashmap.insert(id, Err(e.to_owned()));
+            }
+            return;
+        }
+
+        let items = result.unwrap();
+
+        for id in user_ids {
+            let mut vec = vec![];
+            for row in items.iter().filter(|v| v.user_id == id) {
+                vec.push(row.to_owned());
+            }
+            hashmap.insert(id.to_owned(), Ok(vec));
+        }
+    }
 }
+
+pub struct BatchImpl {
+    dao: Dao<domain::photo::Photo>,
+    conn: Arc<Mutex<MysqlConnection>>,
+}
+
+#[async_trait]
+impl BatchFn<String, DaoResult<Vec<domain::photo::Photo>>> for BatchImpl {
+    async fn load(
+        &mut self,
+        keys: &[String],
+    ) -> HashMap<String, DaoResult<Vec<domain::photo::Photo>>> {
+        let conn = self.conn.lock().unwrap();
+        let mut hashmap = HashMap::new();
+        self.dao
+            .batch_get_all_by_user(&conn, &mut hashmap, keys.to_vec());
+        hashmap
+    }
+}
+
+impl BatchImpl {
+    pub fn new_loader(conn: Arc<Mutex<MysqlConnection>>) -> Loader {
+        cached::Loader::new(BatchImpl {
+            dao: Dao::new(),
+            conn,
+        })
+        .with_max_batch_size(100)
+    }
+}
+
+pub type Loader = cached::Loader<String, DaoResult<Vec<domain::photo::Photo>>, BatchImpl>;

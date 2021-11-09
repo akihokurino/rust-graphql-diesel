@@ -1,9 +1,9 @@
+mod errors;
 mod me;
 mod mutation;
 mod other;
 mod photo;
 mod query;
-mod errors;
 
 use self::mutation::*;
 use self::query::*;
@@ -14,8 +14,8 @@ use juniper::*;
 use juniper_from_schema::graphql_schema_from_file;
 
 use crate::ddb;
-use std::sync::{Arc, Mutex, MutexGuard};
 use diesel::MysqlConnection;
+use std::sync::{Arc, Mutex, MutexGuard};
 
 #[allow(unused)]
 graphql_schema_from_file!("src/graphql/schema.graphql", context_type: Context);
@@ -25,8 +25,7 @@ pub struct Context {
     pub connection: Arc<Mutex<MysqlConnection>>,
 }
 
-impl juniper::Context for Context {
-}
+impl juniper::Context for Context {}
 
 impl Context {
     pub fn new(authorized_user_id: Option<String>) -> Self {

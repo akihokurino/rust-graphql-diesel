@@ -1,6 +1,6 @@
 use crate::ddb::DaoError;
-use juniper::{graphql_value, FieldError};
 use convert_case::{Case, Casing};
+use juniper::{graphql_value, FieldError};
 use strum_macros::Display as StrumDisplay;
 use thiserror::Error;
 
@@ -26,21 +26,21 @@ pub struct FieldErrorWithCode {
 
 impl FieldErrorWithCode {
     pub fn bad_request() -> Self {
-        FieldErrorWithCode{
+        FieldErrorWithCode {
             err: APIError::Text("エラーです".to_string()),
             code: FieldErrorCode::BadRequest,
         }
     }
 
     pub fn un_authenticate() -> Self {
-        FieldErrorWithCode{
+        FieldErrorWithCode {
             err: APIError::Text("エラーです".to_string()),
             code: FieldErrorCode::UnAuthenticate,
         }
     }
 
     pub fn forbidden() -> Self {
-        FieldErrorWithCode{
+        FieldErrorWithCode {
             err: APIError::Text("エラーです".to_string()),
             code: FieldErrorCode::Forbidden,
         }

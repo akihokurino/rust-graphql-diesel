@@ -5,9 +5,9 @@ use crate::graphql::photo::*;
 use crate::graphql::Context;
 use crate::graphql::*;
 use async_trait::async_trait;
+use errors::*;
 use juniper::{Executor, FieldResult};
 use juniper_from_schema::{QueryTrail, Walked};
-use errors::*;
 
 pub struct Query;
 
@@ -69,7 +69,11 @@ impl QueryFields for Query {
 
         let others = user_dao
             .get_all_with_photos(&conn)
-            .map(|v| v.iter().map(|v| (v.0.to_owned(), Some(v.1.to_owned()))).collect::<Vec<_>>())
+            .map(|v| {
+                v.iter()
+                    .map(|v| (v.0.to_owned(), Some(v.1.to_owned())))
+                    .collect::<Vec<_>>()
+            })
             .map_err(FieldErrorWithCode::from)?;
 
         Ok(OtherConnection(others))
@@ -93,7 +97,10 @@ impl QueryFields for Query {
             .map_err(FieldErrorWithCode::from)?;
 
         Ok(PhotoConnection(
-            photos.iter().map(|v| (v.to_owned(), None)).collect::<Vec<_>>(),
+            photos
+                .iter()
+                .map(|v| (v.to_owned(), None))
+                .collect::<Vec<_>>(),
         ))
     }
 
@@ -111,7 +118,9 @@ impl QueryFields for Query {
             .clone()
             .ok_or(FieldErrorWithCode::un_authenticate())?;
 
-        let photo = photo_dao.get(&conn, id.clone()).map_err(FieldErrorWithCode::from)?;
+        let photo = photo_dao
+            .get(&conn, id.clone())
+            .map_err(FieldErrorWithCode::from)?;
         if photo.user_id != authorized_user_id {
             return Err(FieldErrorWithCode::forbidden().into());
         }
@@ -132,7 +141,9 @@ impl QueryFields for Query {
             .clone()
             .ok_or(FieldErrorWithCode::un_authenticate())?;
 
-        let photos = photo_dao.get_all_with_user(&conn).map_err(FieldErrorWithCode::from)?;
+        let photos = photo_dao
+            .get_all_with_user(&conn)
+            .map_err(FieldErrorWithCode::from)?;
 
         Ok(PhotoConnection(
             photos

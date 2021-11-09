@@ -1,7 +1,7 @@
 use crate::domain;
 use crate::graphql::*;
-use juniper_from_schema::{QueryTrail, Walked};
 use errors::*;
+use juniper_from_schema::{QueryTrail, Walked};
 
 #[derive(Debug, Clone)]
 pub struct Other {
@@ -31,7 +31,10 @@ impl OtherFields for Other {
             return Ok(photos
                 .clone()
                 .iter()
-                .map(|v| Photo{photo: v.to_owned(), user: None})
+                .map(|v| Photo {
+                    photo: v.to_owned(),
+                    user: None,
+                })
                 .collect::<Vec<_>>());
         }
 
@@ -42,7 +45,10 @@ impl OtherFields for Other {
         Ok(photos
             .clone()
             .iter()
-            .map(|v| Photo{photo: v.to_owned(), user: None})
+            .map(|v| Photo {
+                photo: v.to_owned(),
+                user: None,
+            })
             .collect::<Vec<_>>())
     }
 }

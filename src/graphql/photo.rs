@@ -1,4 +1,5 @@
 use crate::domain;
+use crate::graphql::errors::FieldErrorWithCode;
 use crate::graphql::*;
 use juniper_from_schema::{QueryTrail, Walked};
 
@@ -28,15 +29,35 @@ impl PhotoFields for Photo {
     fn field_user<'r>(
         &self,
         _: &Executor<Context>,
-        _: &QueryTrail<'r, other::Other, Walked>,
-    ) -> FieldResult<Option<other::Other>> {
+        _: &QueryTrail<'r, Other, Walked>,
+    ) -> FieldResult<Option<Other>> {
         if let None = self.user {
             return Ok(None);
         }
-        return Ok(Some(other::Other {
+
+        Ok(Some(Other {
             user: self.user.clone().unwrap(),
             photos: None,
-        }));
+        }))
+    }
+
+    async fn field_load_user<'s, 'r, 'a>(
+        &'s self,
+        exec: &Executor<'r, 'a, Context>,
+        _: &QueryTrail<'r, Other, Walked>,
+    ) -> FieldResult<Other> {
+        let ctx = exec.context();
+
+        let users: Vec<domain::user::User> =
+            ctx.user_loader.load(self.photo.user_id.clone()).await?;
+        if users.is_empty() {
+            return Err(FieldErrorWithCode::not_found().into());
+        }
+
+        Ok(Other {
+            user: users.first().unwrap().to_owned(),
+            photos: None,
+        })
     }
 }
 
@@ -70,11 +91,10 @@ impl PhotoConnectionFields for PhotoConnection {
     ) -> FieldResult<Vec<PhotoEdge>> {
         let edges = self
             .0
-            .clone()
-            .into_iter()
+            .iter()
             .map(|v| PhotoEdge {
-                photo: v.0.clone(),
-                user: v.1.clone(),
+                photo: v.0.to_owned(),
+                user: v.1.to_owned(),
             })
             .collect::<Vec<_>>();
         Ok(edges)

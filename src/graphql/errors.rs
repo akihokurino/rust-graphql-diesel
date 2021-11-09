@@ -45,6 +45,13 @@ impl FieldErrorWithCode {
             code: FieldErrorCode::Forbidden,
         }
     }
+
+    pub fn not_found() -> Self {
+        FieldErrorWithCode {
+            err: APIError::Text("エラーです".to_string()),
+            code: FieldErrorCode::NotFound,
+        }
+    }
 }
 
 impl From<DaoError> for FieldErrorWithCode {

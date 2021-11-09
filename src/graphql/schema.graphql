@@ -38,12 +38,14 @@ type Me implements Node {
     id: ID! @juniper(ownership: "owned")
     name: String! @juniper(ownership: "owned")
     photos: [Photo!]! @juniper(ownership: "owned")
+    loadPhotos: [Photo!]! @juniper(ownership: "owned", async: true)
 }
 
 type Other implements Node {
     id: ID! @juniper(ownership: "owned")
     name: String! @juniper(ownership: "owned")
     photos: [Photo!]! @juniper(ownership: "owned", async: true)
+    loadPhotos: [Photo!]! @juniper(ownership: "owned", async: true)
 }
 
 type OtherEdge {
@@ -60,6 +62,7 @@ type Photo implements Node {
     url: String! @juniper(ownership: "owned")
     isPublic: Boolean! @juniper(ownership: "owned")
     user: Other @juniper(ownership: "owned")
+    loadUser: Other! @juniper(ownership: "owned", async: true)
 }
 
 type PhotoEdge {

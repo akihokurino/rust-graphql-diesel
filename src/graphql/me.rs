@@ -24,7 +24,24 @@ impl MeFields for Me {
     ) -> FieldResult<Vec<Photo>> {
         Ok(self
             .photos
-            .clone()
+            .iter()
+            .map(|v| Photo {
+                photo: v.to_owned(),
+                user: None,
+            })
+            .collect::<Vec<_>>())
+    }
+
+    async fn field_load_photos<'s, 'r, 'a>(
+        &'s self,
+        exec: &Executor<'r, 'a, Context>,
+        _: &QueryTrail<'r, Photo, Walked>,
+    ) -> FieldResult<Vec<Photo>> {
+        let ctx = exec.context();
+
+        let photos: Vec<domain::photo::Photo> = ctx.photo_loader.load(self.user.id.clone()).await?;
+
+        Ok(photos
             .iter()
             .map(|v| Photo {
                 photo: v.to_owned(),

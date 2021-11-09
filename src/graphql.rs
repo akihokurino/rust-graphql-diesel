@@ -23,6 +23,8 @@ graphql_schema_from_file!("src/graphql/schema.graphql", context_type: Context);
 pub struct Context {
     pub authorized_user_id: Option<String>,
     pub connection: Arc<Mutex<MysqlConnection>>,
+    pub user_loader: ddb::user::Loader,
+    pub photo_loader: ddb::photo::Loader,
 }
 
 impl juniper::Context for Context {}
@@ -33,6 +35,8 @@ impl Context {
         Self {
             authorized_user_id,
             connection: Arc::clone(&conn_ref),
+            user_loader: ddb::user::BatchImpl::new_loader(Arc::clone(&conn_ref)),
+            photo_loader: ddb::photo::BatchImpl::new_loader(Arc::clone(&conn_ref)),
         }
     }
 

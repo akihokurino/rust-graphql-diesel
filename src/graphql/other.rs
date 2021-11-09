@@ -29,7 +29,6 @@ impl OtherFields for Other {
 
         if let Some(photos) = self.photos.clone() {
             return Ok(photos
-                .clone()
                 .iter()
                 .map(|v| Photo {
                     photo: v.to_owned(),
@@ -43,7 +42,24 @@ impl OtherFields for Other {
             .map_err(FieldErrorWithCode::from)?;
 
         Ok(photos
-            .clone()
+            .iter()
+            .map(|v| Photo {
+                photo: v.to_owned(),
+                user: None,
+            })
+            .collect::<Vec<_>>())
+    }
+
+    async fn field_load_photos<'s, 'r, 'a>(
+        &'s self,
+        exec: &Executor<'r, 'a, Context>,
+        _: &QueryTrail<'r, Photo, Walked>,
+    ) -> FieldResult<Vec<Photo>> {
+        let ctx = exec.context();
+
+        let photos: Vec<domain::photo::Photo> = ctx.photo_loader.load(self.user.id.clone()).await?;
+
+        Ok(photos
             .iter()
             .map(|v| Photo {
                 photo: v.to_owned(),
@@ -83,11 +99,10 @@ impl OtherConnectionFields for OtherConnection {
     ) -> FieldResult<Vec<OtherEdge>> {
         let edges = self
             .0
-            .clone()
-            .into_iter()
+            .iter()
             .map(|v| OtherEdge {
-                user: v.0.clone(),
-                photos: v.1.clone(),
+                user: v.0.to_owned(),
+                photos: v.1.to_owned(),
             })
             .collect::<Vec<_>>();
         Ok(edges)

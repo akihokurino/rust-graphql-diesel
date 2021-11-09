@@ -20,14 +20,12 @@ impl MeFields for Me {
     fn field_photos<'r>(
         &self,
         _: &Executor<Context>,
-        _: &QueryTrail<'r, PhotoConnection, Walked>,
-    ) -> FieldResult<photo::PhotoConnection> {
-        Ok(photo::PhotoConnection(
-            self.photos
-                .clone()
-                .into_iter()
-                .map(|v| (v, None))
-                .collect::<Vec<_>>(),
-        ))
+        _: &QueryTrail<'r, Photo, Walked>,
+    ) -> FieldResult<Vec<Photo>> {
+        Ok(self.photos
+            .clone()
+            .iter()
+            .map(|v| Photo{photo: v.to_owned(), user: None})
+            .collect::<Vec<_>>())
     }
 }

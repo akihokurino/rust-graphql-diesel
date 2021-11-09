@@ -37,13 +37,13 @@ interface Node {
 type Me implements Node {
     id: ID! @juniper(ownership: "owned")
     name: String! @juniper(ownership: "owned")
-    photos: PhotoConnection! @juniper(ownership: "owned")
+    photos: [Photo!]! @juniper(ownership: "owned")
 }
 
 type Other implements Node {
     id: ID! @juniper(ownership: "owned")
     name: String! @juniper(ownership: "owned")
-    photos: PhotoConnection! @juniper(ownership: "owned", async: true)
+    photos: [Photo!]! @juniper(ownership: "owned", async: true)
 }
 
 type OtherEdge {
@@ -69,7 +69,6 @@ type PhotoEdge {
 type PhotoConnection {
     edges: [PhotoEdge!]! @juniper(ownership: "owned", async: true)
 }
-
 
 input SignUpInput {
     name: String!

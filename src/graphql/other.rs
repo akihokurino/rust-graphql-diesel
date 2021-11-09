@@ -21,33 +21,29 @@ impl OtherFields for Other {
     async fn field_photos<'s, 'r, 'a>(
         &'s self,
         exec: &Executor<'r, 'a, Context>,
-        _: &QueryTrail<'r, photo::PhotoConnection, Walked>,
-    ) -> FieldResult<photo::PhotoConnection> {
+        _: &QueryTrail<'r, Photo, Walked>,
+    ) -> FieldResult<Vec<Photo>> {
         let ctx = exec.context();
         let conn = ctx.get_mutex_connection();
         let photo_dao = ctx.ddb_dao::<domain::photo::Photo>();
 
         if let Some(photos) = self.photos.clone() {
-            return Ok(photo::PhotoConnection(
-                photos
-                    .clone()
-                    .into_iter()
-                    .map(|v| (v, None))
-                    .collect::<Vec<_>>(),
-            ));
+            return Ok(photos
+                .clone()
+                .iter()
+                .map(|v| Photo{photo: v.to_owned(), user: None})
+                .collect::<Vec<_>>());
         }
 
         let photos = photo_dao
             .get_all_by_user(&conn, self.user.id.clone())
             .map_err(FieldErrorWithCode::from)?;
 
-        Ok(photo::PhotoConnection(
-            photos
-                .clone()
-                .into_iter()
-                .map(|v| (v, None))
-                .collect::<Vec<_>>(),
-        ))
+        Ok(photos
+            .clone()
+            .iter()
+            .map(|v| Photo{photo: v.to_owned(), user: None})
+            .collect::<Vec<_>>())
     }
 }
 

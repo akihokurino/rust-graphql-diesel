@@ -1,6 +1,7 @@
 use crate::domain;
 use crate::graphql::*;
 use juniper_from_schema::{QueryTrail, Walked};
+use errors::*;
 
 #[derive(Debug, Clone)]
 pub struct Other {
@@ -23,7 +24,7 @@ impl OtherFields for Other {
         _: &QueryTrail<'r, photo::PhotoConnection, Walked>,
     ) -> FieldResult<photo::PhotoConnection> {
         let ctx = exec.context();
-        let conn = ddb::establish_connection();
+        let conn = ctx.get_mutex_connection();
         let photo_dao = ctx.ddb_dao::<domain::photo::Photo>();
 
         if let Some(photos) = self.photos.clone() {
@@ -38,7 +39,7 @@ impl OtherFields for Other {
 
         let photos = photo_dao
             .get_all_by_user(&conn, self.user.id.clone())
-            .map_err(FieldError::from)?;
+            .map_err(FieldErrorWithCode::from)?;
 
         Ok(photo::PhotoConnection(
             photos

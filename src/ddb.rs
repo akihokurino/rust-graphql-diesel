@@ -58,28 +58,28 @@ impl Tx {
     }
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone)]
 pub enum DaoError {
     #[error("notfound")]
     NotFound,
     #[error("forbidden")]
     Forbidden,
     #[error("internal error: {0}")]
-    InternalError(String),
+    Internal(String),
 }
 
 impl From<diesel::result::Error> for DaoError {
     fn from(e: diesel::result::Error) -> Self {
         match e {
             diesel::result::Error::NotFound => Self::NotFound,
-            _ => Self::InternalError(e.to_string()),
+            _ => Self::Internal(e.to_string()),
         }
     }
 }
 
 impl From<String> for DaoError {
     fn from(v: String) -> Self {
-        Self::InternalError(v)
+        Self::Internal(v)
     }
 }
 

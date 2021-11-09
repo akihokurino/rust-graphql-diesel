@@ -30,11 +30,16 @@ async fn main() -> std::io::Result<()> {
                     .route(web::get().to(graphql_route)),
             )
             .service(web::resource("/playground").route(web::get().to(playground_route)))
+            .service(web::resource("/health_check").route(web::get().to(health_check_route)))
     })
     .bind(format!("0.0.0.0:{}", port))
     .unwrap()
     .run()
     .await
+}
+
+async fn health_check_route() -> actix_web::Result<HttpResponse> {
+    Ok(HttpResponse::Ok().body("ok"))
 }
 
 async fn playground_route() -> actix_web::Result<HttpResponse> {
@@ -51,6 +56,6 @@ async fn graphql_route(
         None => None,
     };
 
-    let context = graphql::Context { authorized_user_id };
+    let context = graphql::Context::new(authorized_user_id);
     graphql_handler(&schema, &context, req, payload).await
 }

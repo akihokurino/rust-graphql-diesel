@@ -13,17 +13,17 @@ schema {
 }
 
 type Query {
-    allUsers: OtherConnection! @juniper(ownership: "owned", async: true)
     me: Me! @juniper(ownership: "owned", async: true)
     others: OtherConnection! @juniper(ownership: "owned", async: true)
+    allUsers: OtherConnection! @juniper(ownership: "owned", async: true)
+    photos: PhotoConnection! @juniper(ownership: "owned", async: true)
+    photo(id: String!): Photo! @juniper(ownership: "owned", async: true)
     allPhotos: PhotoConnection! @juniper(ownership: "owned", async: true)
-    myPhotos: PhotoConnection! @juniper(ownership: "owned", async: true)
-    myPhoto(input: MyPhotoInput!): Photo! @juniper(ownership: "owned", async: true)
 }
 
 type Mutation {
     signUp(input: SignUpInput!): Me! @juniper(ownership: "owned", async: true)
-    updateUserInfo(input: UpdateUserInfoInput!): Me! @juniper(ownership: "owned", async: true)
+    updateUser(input: UpdateUserInput!): Me! @juniper(ownership: "owned", async: true)
     leave: Boolean! @juniper(ownership: "owned", async: true)
     createPhoto(input: CreatePhotoInput!): Photo! @juniper(ownership: "owned", async: true)
     updatePhoto(input: UpdatePhotoInput!): Photo! @juniper(ownership: "owned", async: true)
@@ -75,7 +75,7 @@ input SignUpInput {
     name: String!
 }
 
-input UpdateUserInfoInput {
+input UpdateUserInput {
     name: String!
 }
 
@@ -90,9 +90,5 @@ input UpdatePhotoInput {
 }
 
 input DeletePhotoInput {
-    id: String!
-}
-
-input MyPhotoInput {
     id: String!
 }

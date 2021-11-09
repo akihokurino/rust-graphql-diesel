@@ -8,24 +8,7 @@ services:
       - ./db/initdb.d:/docker-entrypoint-initdb.d
       - ./db/data:/var/lib/mysql
     environment:
-      MYSQL_DATABASE: photos
-      MYSQL_USER: photos
-      MYSQL_PASSWORD: photos
+      MYSQL_DATABASE: db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
       MYSQL_ROOT_PASSWORD: password
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: local-dev
-    image: rust-graphql-sample_local:latest
-    ports:
-      - '3000:3000'
-    volumes:
-      - .:/app
-    working_dir: /app
-    command:
-      - "sh"
-      - "-c"
-      - "cargo run"
-    environment:
-      - PORT=3000

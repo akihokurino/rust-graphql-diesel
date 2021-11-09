@@ -8,8 +8,10 @@ use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use juniper::{Executor, FieldResult};
 use juniper_from_schema::{QueryTrail, Walked};
+use crate::graphql::errors::FieldErrorWithCode;
 
 pub struct Mutation;
+
 #[async_trait]
 impl MutationFields for Mutation {
     async fn field_sign_up<'s, 'r, 'a>(
@@ -19,16 +21,20 @@ impl MutationFields for Mutation {
         input: SignUpInput,
     ) -> FieldResult<Me> {
         let ctx = exec.context();
-        let conn = ddb::establish_connection();
+        let conn = ctx.get_mutex_connection();
         let user_dao = ctx.ddb_dao::<domain::user::User>();
 
         let now: DateTime<Utc> = Utc::now();
-        let name = input.name;
+        let name: String = input.name;
+
+        if name.is_empty() {
+            return Err(FieldErrorWithCode::bad_request().into())
+        }
 
         let user = domain::user::User::new(name, now);
 
         if let Err(e) = user_dao.insert(&conn, &user) {
-            return Err(FieldError::from(e));
+            return Err(FieldErrorWithCode::from(e).into());
         }
 
         Ok(Me {
@@ -37,22 +43,26 @@ impl MutationFields for Mutation {
         })
     }
 
-    async fn field_update_user_info<'s, 'r, 'a>(
+    async fn field_update_user<'s, 'r, 'a>(
         &'s self,
         exec: &Executor<'r, 'a, Context>,
         _: &QueryTrail<'r, Me, Walked>,
-        input: UpdateUserInfoInput,
+        input: UpdateUserInput,
     ) -> FieldResult<Me> {
         let ctx = exec.context();
-        let conn = ddb::establish_connection();
+        let conn = ctx.get_mutex_connection();
         let user_dao = ctx.ddb_dao::<domain::user::User>();
         let authorized_user_id = ctx
             .authorized_user_id
             .clone()
-            .ok_or(FieldError::from("unauthorized"))?;
+            .ok_or(FieldErrorWithCode::un_authenticate())?;
 
         let now: DateTime<Utc> = Utc::now();
-        let name = input.name;
+        let name: String = input.name;
+
+        if name.is_empty() {
+            return Err(FieldErrorWithCode::bad_request().into())
+        }
 
         let user = Tx::run(&conn, || {
                 let mut user = user_dao.get(&conn, authorized_user_id)?;
@@ -63,7 +73,7 @@ impl MutationFields for Mutation {
 
                 Ok(user)
             })
-            .map_err(FieldError::from)?;
+            .map_err(FieldErrorWithCode::from)?;
 
         Ok(Me {
             user,
@@ -76,15 +86,15 @@ impl MutationFields for Mutation {
         exec: &Executor<'r, 'a, Context>,
     ) -> FieldResult<bool> {
         let ctx = exec.context();
-        let conn = ddb::establish_connection();
+        let conn = ctx.get_mutex_connection();
         let user_dao = ctx.ddb_dao::<domain::user::User>();
         let authorized_user_id = ctx
             .authorized_user_id
             .clone()
-            .ok_or(FieldError::from("unauthorized"))?;
+            .ok_or(FieldErrorWithCode::un_authenticate())?;
 
         if let Err(e) = user_dao.delete(&conn, authorized_user_id) {
-            return Err(FieldError::from(e));
+            return Err(FieldErrorWithCode::from(e).into());
         }
 
         Ok(true)
@@ -97,21 +107,25 @@ impl MutationFields for Mutation {
         input: CreatePhotoInput,
     ) -> FieldResult<Photo> {
         let ctx = exec.context();
-        let conn = ddb::establish_connection();
+        let conn = ctx.get_mutex_connection();
         let photo_dao = ctx.ddb_dao::<domain::photo::Photo>();
         let authorized_user_id = ctx
             .authorized_user_id
             .clone()
-            .ok_or(FieldError::from("unauthorized"))?;
+            .ok_or(FieldErrorWithCode::un_authenticate())?;
 
         let now: DateTime<Utc> = Utc::now();
-        let url = input.url;
+        let url: String = input.url;
         let is_public = input.is_public;
+
+        if url.is_empty() {
+            return Err(FieldErrorWithCode::bad_request().into())
+        }
 
         let photo = domain::photo::Photo::new(authorized_user_id, url, is_public, now);
 
         if let Err(e) = photo_dao.insert(&conn, &photo) {
-            return Err(FieldError::from(e));
+            return Err(FieldErrorWithCode::from(e).into());
         }
 
         Ok(Photo { photo, user: None })
@@ -124,12 +138,12 @@ impl MutationFields for Mutation {
         input: UpdatePhotoInput,
     ) -> FieldResult<Photo> {
         let ctx = exec.context();
-        let conn = ddb::establish_connection();
+        let conn = ctx.get_mutex_connection();
         let photo_dao = ctx.ddb_dao::<domain::photo::Photo>();
         let authorized_user_id = ctx
             .authorized_user_id
             .clone()
-            .ok_or(FieldError::from("unauthorized"))?;
+            .ok_or(FieldErrorWithCode::un_authenticate())?;
 
         let now: DateTime<Utc> = Utc::now();
         let id = input.id;
@@ -147,7 +161,7 @@ impl MutationFields for Mutation {
 
                 Ok(photo)
             })
-            .map_err(FieldError::from)?;
+            .map_err(FieldErrorWithCode::from)?;
 
         Ok(Photo { photo, user: None })
     }
@@ -158,22 +172,22 @@ impl MutationFields for Mutation {
         input: DeletePhotoInput,
     ) -> FieldResult<bool> {
         let ctx = exec.context();
-        let conn = ddb::establish_connection();
+        let conn = ctx.get_mutex_connection();
         let photo_dao = ctx.ddb_dao::<domain::photo::Photo>();
         let authorized_user_id = ctx
             .authorized_user_id
             .clone()
-            .ok_or(FieldError::from("unauthorized"))?;
+            .ok_or(FieldErrorWithCode::un_authenticate())?;
 
         let id = input.id;
 
-        let photo = photo_dao.get(&conn, id.clone()).map_err(FieldError::from)?;
+        let photo = photo_dao.get(&conn, id.clone()).map_err(FieldErrorWithCode::from)?;
         if photo.user_id != authorized_user_id {
-            return Err(FieldError::from("forbidden"));
+            return Err(FieldErrorWithCode::forbidden().into());
         }
 
         if let Err(e) = photo_dao.delete(&conn, id.clone()) {
-            return Err(FieldError::from(e));
+            return Err(FieldErrorWithCode::from(e).into());
         }
 
         Ok(true)

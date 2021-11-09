@@ -1,11 +1,11 @@
-# rust-graphql-sample
+# rust-graphql-diesel-sample
 
 ## 構成
-- rust 1.53.0
+- rust v1.53.0
 - sccache
 - diesel
-- juniper
-https://github.com/graphql-rust/juniper
+- juniper （ https://github.com/graphql-rust/juniper )
+- juniper-from-schema（ https://github.com/davidpdrsn/juniper-from-schema ）
 
 ## diesel
 ```

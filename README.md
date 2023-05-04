@@ -1,4 +1,4 @@
-## Specs
+## Used, Dependency
 - rust 1.53.0
 - actix-web（ https://actix.rs/ ）  
 - juniper（ https://github.com/graphql-rust/juniper )
